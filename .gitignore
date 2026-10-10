@@ -1,0 +1,14 @@
+# ngspice simulation output
+*.raw
+spice/*.log
+
+# Magic extraction intermediates (regenerable)
+*.ext
+*.sim
+*.nodes
+*.res.ext
+
+# Editor / OS clutter
+*~
+*.swp
+.DS_Store
