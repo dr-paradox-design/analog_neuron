@@ -7,7 +7,8 @@
 * excursions can lock onto spurious kV equilibria; with mismatch on, ~3 % of seeds did, with
 * either start method. At real voltages (≤ 1.8 V) the coefficient effect is only -0.18 %.
 *   1st try: power-up (uic, VDD ramps 0 -> VDD in 20 us)
-*   if any key node leaves the physical range: same seed (same mismatch) again from a
+*   if any key node leaves [-(VDD+0.6), VDD+0.6] (incl. the Rz-Cc nodes, held only by an
+*   xhigh_po resistor at DC) or the supply current goes negative: same seed again from a
 *   .nodeset-guided operating point at full VDD
 *   RESULT sane = 1 only if the accepted run is physical; RESULT method = 1 or 2.
 * Stand-in pad ESD diodes on y (reverse leakage ~fA) keep the near-floating output physical.
@@ -31,18 +32,32 @@ DESDP y vdd desd
 
 .control
 tran 1u 2.05m 0 2u uic
-let chk = abs(v(xn.vk)) + abs(v(xn.vref)) + abs(v(xn.s)) + abs(v(y)) + abs(v(xn.dk))
-meas tran chkmax max chk from=30u
+let lim = @VDD@ + 0.6
+let bad = (vecmax(abs(v(xn.vk))) > lim) + (vecmax(abs(v(xn.vref))) > lim) + (vecmax(abs(v(xn.s))) > lim)
+let bad = bad + (vecmax(abs(v(y))) > lim) + (vecmax(abs(v(xn.dk))) > lim) + (vecmax(abs(v(xn.gs))) > lim)
+let bad = bad + (vecmax(abs(v(xn.gk))) > lim) + (vecmax(abs(v(xn.xvs.x))) > lim) + (vecmax(abs(v(xn.xvk.x))) > lim)
+let bad = bad + (vecmax(abs(v(xn.xvs.gc))) > lim) + (vecmax(abs(v(xn.xvk.gc))) > lim)
+let bad = bad + (vecmax(abs(v(xn.vp))) > lim) + (vecmax(abs(v(xn.vn))) > lim)
+let ivdd = -i(VDD)
+meas tran imin min ivdd from=30u
+let bad = bad + (imin < 0)
 let method = 1
-if chkmax > 8
+if bad > 0
   echo "NOTE: non-physical solution from the power-up start; retrying from a nodeset operating point"
   alter @VDD[pwl] = [ 0 @VDD@ 2.1m @VDD@ ]
   tran 1u 2.05m 0 2u
-  let chk = abs(v(xn.vk)) + abs(v(xn.vref)) + abs(v(xn.s)) + abs(v(y)) + abs(v(xn.dk))
-  meas tran chkmax max chk from=30u
+  let lim = @VDD@ + 0.6
+  let bad = (vecmax(abs(v(xn.vk))) > lim) + (vecmax(abs(v(xn.vref))) > lim) + (vecmax(abs(v(xn.s))) > lim)
+  let bad = bad + (vecmax(abs(v(y))) > lim) + (vecmax(abs(v(xn.dk))) > lim) + (vecmax(abs(v(xn.gs))) > lim)
+  let bad = bad + (vecmax(abs(v(xn.gk))) > lim) + (vecmax(abs(v(xn.xvs.x))) > lim) + (vecmax(abs(v(xn.xvk.x))) > lim)
+  let bad = bad + (vecmax(abs(v(xn.xvs.gc))) > lim) + (vecmax(abs(v(xn.xvk.gc))) > lim)
+  let bad = bad + (vecmax(abs(v(xn.vp))) > lim) + (vecmax(abs(v(xn.vn))) > lim)
+  let ivdd = -i(VDD)
+  meas tran imin min ivdd from=30u
+  let bad = bad + (imin < 0)
   let method = 2
 end
-let sane = chkmax < 8
+let sane = bad < 0.5
 echo "RESULT sane $&sane"
 echo "RESULT method $&method"
 let ivdd = -i(VDD)

@@ -9,11 +9,12 @@
 *                       right-half-plane zero and adds phase at small MF current)
 *
 * Ports: IN VREF G VP VDD VSS
-.subckt vi_conv IN VREF G VP VDD VSS r_l=103.5 mf_w=8 mf_l=2 cc_w=15 cc_l=15 rz_l=17 i0_w=8
+.subckt vi_conv IN VREF G VP VDD VSS r_l=103.5 mf_w=8 mf_l=2 cc_w=15 cc_l=15 rz_l=17 i0_w=8 i0_l=2
++ ota_in_w=10 ota_in_l=1 ota_ld_w=2 ota_ld_l=2
 XR  IN  X   VSS sky130_fd_pr__res_xhigh_po_0p69 L={r_l}
-XA  X   VREF G VP VDD VSS ota5p
+XA  X   VREF G VP VDD VSS ota5p in_w={ota_in_w} in_l={ota_in_l} ld_w={ota_ld_w} ld_l={ota_ld_l}
 XMF X   G   VSS VSS sky130_fd_pr__nfet_01v8 W={mf_w} L={mf_l} nf=1 m=1
-XI0 X   VP  VDD VDD sky130_fd_pr__pfet_01v8 W={i0_w} L=2 nf=1 m=1
+XI0 X   VP  VDD VDD sky130_fd_pr__pfet_01v8 W={i0_w} L={i0_l} nf=1 m=1
 XRZ G   GC  VSS sky130_fd_pr__res_xhigh_po_0p69 L={rz_l}
 XCC GC  X   sky130_fd_pr__cap_mim_m3_1 W={cc_w} L={cc_l}
 .ends vi_conv
