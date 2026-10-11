@@ -1,0 +1,181 @@
+* Device characterisation: Vgs and gm/Id vs L at fixed W=2um, |Vds|=0.9V
+* rendered by scripts/sim.py
+.lib @LIB@ @CORNER@
+.temp @TEMP@
+
+VDD vdd 0 @VDD@
+VG  g   0 0
+VGP gp  0 0
+
+VDN0 dn0 0 0.9
+XN0 dn0 g 0 0 sky130_fd_pr__nfet_01v8 W=2 L=0.5
+VDP0 dp0 0 {@VDD@-0.9}
+XP0 dp0 gp vdd vdd sky130_fd_pr__pfet_01v8 W=2 L=0.5
+VDN1 dn1 0 0.9
+XN1 dn1 g 0 0 sky130_fd_pr__nfet_01v8 W=2 L=1
+VDP1 dp1 0 {@VDD@-0.9}
+XP1 dp1 gp vdd vdd sky130_fd_pr__pfet_01v8 W=2 L=1
+VDN2 dn2 0 0.9
+XN2 dn2 g 0 0 sky130_fd_pr__nfet_01v8 W=2 L=2
+VDP2 dp2 0 {@VDD@-0.9}
+XP2 dp2 gp vdd vdd sky130_fd_pr__pfet_01v8 W=2 L=2
+VDN3 dn3 0 0.9
+XN3 dn3 g 0 0 sky130_fd_pr__nfet_01v8 W=2 L=4
+VDP3 dp3 0 {@VDD@-0.9}
+XP3 dp3 gp vdd vdd sky130_fd_pr__pfet_01v8 W=2 L=4
+VDN4 dn4 0 0.9
+XN4 dn4 g 0 0 sky130_fd_pr__nfet_01v8 W=2 L=8
+VDP4 dp4 0 {@VDD@-0.9}
+XP4 dp4 gp vdd vdd sky130_fd_pr__pfet_01v8 W=2 L=8
+
+.control
+dc VG 0 1.5 0.001
+let idn0 = -i(VDN0)
+let gmn0 = deriv(idn0)/idn0
+meas dc vgs_n_L0p5_I1u when idn0=1e-06
+meas dc gmid_n_L0p5_I1u find gmn0 when idn0=1e-06
+echo "RESULT vgs_n_L0p5_I1u $&vgs_n_L0p5_I1u"
+echo "RESULT gmid_n_L0p5_I1u $&gmid_n_L0p5_I1u"
+meas dc vgs_n_L0p5_I2u when idn0=2e-06
+meas dc gmid_n_L0p5_I2u find gmn0 when idn0=2e-06
+echo "RESULT vgs_n_L0p5_I2u $&vgs_n_L0p5_I2u"
+echo "RESULT gmid_n_L0p5_I2u $&gmid_n_L0p5_I2u"
+meas dc vgs_n_L0p5_I5u when idn0=5e-06
+meas dc gmid_n_L0p5_I5u find gmn0 when idn0=5e-06
+echo "RESULT vgs_n_L0p5_I5u $&vgs_n_L0p5_I5u"
+echo "RESULT gmid_n_L0p5_I5u $&gmid_n_L0p5_I5u"
+let idn1 = -i(VDN1)
+let gmn1 = deriv(idn1)/idn1
+meas dc vgs_n_L1_I1u when idn1=1e-06
+meas dc gmid_n_L1_I1u find gmn1 when idn1=1e-06
+echo "RESULT vgs_n_L1_I1u $&vgs_n_L1_I1u"
+echo "RESULT gmid_n_L1_I1u $&gmid_n_L1_I1u"
+meas dc vgs_n_L1_I2u when idn1=2e-06
+meas dc gmid_n_L1_I2u find gmn1 when idn1=2e-06
+echo "RESULT vgs_n_L1_I2u $&vgs_n_L1_I2u"
+echo "RESULT gmid_n_L1_I2u $&gmid_n_L1_I2u"
+meas dc vgs_n_L1_I5u when idn1=5e-06
+meas dc gmid_n_L1_I5u find gmn1 when idn1=5e-06
+echo "RESULT vgs_n_L1_I5u $&vgs_n_L1_I5u"
+echo "RESULT gmid_n_L1_I5u $&gmid_n_L1_I5u"
+let idn2 = -i(VDN2)
+let gmn2 = deriv(idn2)/idn2
+meas dc vgs_n_L2_I1u when idn2=1e-06
+meas dc gmid_n_L2_I1u find gmn2 when idn2=1e-06
+echo "RESULT vgs_n_L2_I1u $&vgs_n_L2_I1u"
+echo "RESULT gmid_n_L2_I1u $&gmid_n_L2_I1u"
+meas dc vgs_n_L2_I2u when idn2=2e-06
+meas dc gmid_n_L2_I2u find gmn2 when idn2=2e-06
+echo "RESULT vgs_n_L2_I2u $&vgs_n_L2_I2u"
+echo "RESULT gmid_n_L2_I2u $&gmid_n_L2_I2u"
+meas dc vgs_n_L2_I5u when idn2=5e-06
+meas dc gmid_n_L2_I5u find gmn2 when idn2=5e-06
+echo "RESULT vgs_n_L2_I5u $&vgs_n_L2_I5u"
+echo "RESULT gmid_n_L2_I5u $&gmid_n_L2_I5u"
+let idn3 = -i(VDN3)
+let gmn3 = deriv(idn3)/idn3
+meas dc vgs_n_L4_I1u when idn3=1e-06
+meas dc gmid_n_L4_I1u find gmn3 when idn3=1e-06
+echo "RESULT vgs_n_L4_I1u $&vgs_n_L4_I1u"
+echo "RESULT gmid_n_L4_I1u $&gmid_n_L4_I1u"
+meas dc vgs_n_L4_I2u when idn3=2e-06
+meas dc gmid_n_L4_I2u find gmn3 when idn3=2e-06
+echo "RESULT vgs_n_L4_I2u $&vgs_n_L4_I2u"
+echo "RESULT gmid_n_L4_I2u $&gmid_n_L4_I2u"
+meas dc vgs_n_L4_I5u when idn3=5e-06
+meas dc gmid_n_L4_I5u find gmn3 when idn3=5e-06
+echo "RESULT vgs_n_L4_I5u $&vgs_n_L4_I5u"
+echo "RESULT gmid_n_L4_I5u $&gmid_n_L4_I5u"
+let idn4 = -i(VDN4)
+let gmn4 = deriv(idn4)/idn4
+meas dc vgs_n_L8_I1u when idn4=1e-06
+meas dc gmid_n_L8_I1u find gmn4 when idn4=1e-06
+echo "RESULT vgs_n_L8_I1u $&vgs_n_L8_I1u"
+echo "RESULT gmid_n_L8_I1u $&gmid_n_L8_I1u"
+meas dc vgs_n_L8_I2u when idn4=2e-06
+meas dc gmid_n_L8_I2u find gmn4 when idn4=2e-06
+echo "RESULT vgs_n_L8_I2u $&vgs_n_L8_I2u"
+echo "RESULT gmid_n_L8_I2u $&gmid_n_L8_I2u"
+meas dc vgs_n_L8_I5u when idn4=5e-06
+meas dc gmid_n_L8_I5u find gmn4 when idn4=5e-06
+echo "RESULT vgs_n_L8_I5u $&vgs_n_L8_I5u"
+echo "RESULT gmid_n_L8_I5u $&gmid_n_L8_I5u"
+dc VGP @VDD@ 0 -0.001
+let idp0 = i(VDP0)
+let vsg = @VDD@ - v(gp)
+let gmp0 = abs(deriv(idp0))/idp0
+meas dc vsg_p_L0p5_I1u find vsg when idp0=1e-06
+meas dc gmid_p_L0p5_I1u find gmp0 when idp0=1e-06
+echo "RESULT vsg_p_L0p5_I1u $&vsg_p_L0p5_I1u"
+echo "RESULT gmid_p_L0p5_I1u $&gmid_p_L0p5_I1u"
+meas dc vsg_p_L0p5_I2u find vsg when idp0=2e-06
+meas dc gmid_p_L0p5_I2u find gmp0 when idp0=2e-06
+echo "RESULT vsg_p_L0p5_I2u $&vsg_p_L0p5_I2u"
+echo "RESULT gmid_p_L0p5_I2u $&gmid_p_L0p5_I2u"
+meas dc vsg_p_L0p5_I5u find vsg when idp0=5e-06
+meas dc gmid_p_L0p5_I5u find gmp0 when idp0=5e-06
+echo "RESULT vsg_p_L0p5_I5u $&vsg_p_L0p5_I5u"
+echo "RESULT gmid_p_L0p5_I5u $&gmid_p_L0p5_I5u"
+let idp1 = i(VDP1)
+let vsg = @VDD@ - v(gp)
+let gmp1 = abs(deriv(idp1))/idp1
+meas dc vsg_p_L1_I1u find vsg when idp1=1e-06
+meas dc gmid_p_L1_I1u find gmp1 when idp1=1e-06
+echo "RESULT vsg_p_L1_I1u $&vsg_p_L1_I1u"
+echo "RESULT gmid_p_L1_I1u $&gmid_p_L1_I1u"
+meas dc vsg_p_L1_I2u find vsg when idp1=2e-06
+meas dc gmid_p_L1_I2u find gmp1 when idp1=2e-06
+echo "RESULT vsg_p_L1_I2u $&vsg_p_L1_I2u"
+echo "RESULT gmid_p_L1_I2u $&gmid_p_L1_I2u"
+meas dc vsg_p_L1_I5u find vsg when idp1=5e-06
+meas dc gmid_p_L1_I5u find gmp1 when idp1=5e-06
+echo "RESULT vsg_p_L1_I5u $&vsg_p_L1_I5u"
+echo "RESULT gmid_p_L1_I5u $&gmid_p_L1_I5u"
+let idp2 = i(VDP2)
+let vsg = @VDD@ - v(gp)
+let gmp2 = abs(deriv(idp2))/idp2
+meas dc vsg_p_L2_I1u find vsg when idp2=1e-06
+meas dc gmid_p_L2_I1u find gmp2 when idp2=1e-06
+echo "RESULT vsg_p_L2_I1u $&vsg_p_L2_I1u"
+echo "RESULT gmid_p_L2_I1u $&gmid_p_L2_I1u"
+meas dc vsg_p_L2_I2u find vsg when idp2=2e-06
+meas dc gmid_p_L2_I2u find gmp2 when idp2=2e-06
+echo "RESULT vsg_p_L2_I2u $&vsg_p_L2_I2u"
+echo "RESULT gmid_p_L2_I2u $&gmid_p_L2_I2u"
+meas dc vsg_p_L2_I5u find vsg when idp2=5e-06
+meas dc gmid_p_L2_I5u find gmp2 when idp2=5e-06
+echo "RESULT vsg_p_L2_I5u $&vsg_p_L2_I5u"
+echo "RESULT gmid_p_L2_I5u $&gmid_p_L2_I5u"
+let idp3 = i(VDP3)
+let vsg = @VDD@ - v(gp)
+let gmp3 = abs(deriv(idp3))/idp3
+meas dc vsg_p_L4_I1u find vsg when idp3=1e-06
+meas dc gmid_p_L4_I1u find gmp3 when idp3=1e-06
+echo "RESULT vsg_p_L4_I1u $&vsg_p_L4_I1u"
+echo "RESULT gmid_p_L4_I1u $&gmid_p_L4_I1u"
+meas dc vsg_p_L4_I2u find vsg when idp3=2e-06
+meas dc gmid_p_L4_I2u find gmp3 when idp3=2e-06
+echo "RESULT vsg_p_L4_I2u $&vsg_p_L4_I2u"
+echo "RESULT gmid_p_L4_I2u $&gmid_p_L4_I2u"
+meas dc vsg_p_L4_I5u find vsg when idp3=5e-06
+meas dc gmid_p_L4_I5u find gmp3 when idp3=5e-06
+echo "RESULT vsg_p_L4_I5u $&vsg_p_L4_I5u"
+echo "RESULT gmid_p_L4_I5u $&gmid_p_L4_I5u"
+let idp4 = i(VDP4)
+let vsg = @VDD@ - v(gp)
+let gmp4 = abs(deriv(idp4))/idp4
+meas dc vsg_p_L8_I1u find vsg when idp4=1e-06
+meas dc gmid_p_L8_I1u find gmp4 when idp4=1e-06
+echo "RESULT vsg_p_L8_I1u $&vsg_p_L8_I1u"
+echo "RESULT gmid_p_L8_I1u $&gmid_p_L8_I1u"
+meas dc vsg_p_L8_I2u find vsg when idp4=2e-06
+meas dc gmid_p_L8_I2u find gmp4 when idp4=2e-06
+echo "RESULT vsg_p_L8_I2u $&vsg_p_L8_I2u"
+echo "RESULT gmid_p_L8_I2u $&gmid_p_L8_I2u"
+meas dc vsg_p_L8_I5u find vsg when idp4=5e-06
+meas dc gmid_p_L8_I5u find gmp4 when idp4=5e-06
+echo "RESULT vsg_p_L8_I5u $&vsg_p_L8_I5u"
+echo "RESULT gmid_p_L8_I5u $&gmid_p_L8_I5u"
+quit
+.endc
+.end
