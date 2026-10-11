@@ -1,22 +1,53 @@
 * Neuron core transfer, linearity and power — rendered by scripts/sim.py
-* x ramps 0.29 -> 1.21 V over 2 ms (quasi-static for a MHz-bandwidth circuit). A DC sweep
-* of x needs repeated gmin-stepping rescues on this circuit; the slow ramp is robust and
-* also shows any oscillation. y is unloaded (output buffer / load TBD pending Silicluster).
+* x ramps 0.29 -> 1.21 V over 2 ms (quasi-static for a MHz-bandwidth circuit; a DC sweep of x
+* needs repeated gmin rescues on this circuit).
+*
+* Numerical robustness: the PDK xhigh_po model has NEGATIVE voltage coefficients
+* (R·(1 - 1e-3|V| - 1e-4 V²/L²)), so its resistance crosses zero near |V| ≈ 1 kV. Newton
+* excursions can lock onto spurious kV equilibria; with mismatch on, ~3 % of seeds did, with
+* either start method. At real voltages (≤ 1.8 V) the coefficient effect is only -0.18 %.
+*   1st try: power-up (uic, VDD ramps 0 -> VDD in 20 us)
+*   if any key node leaves the physical range: same seed (same mismatch) again from a
+*   .nodeset-guided operating point at full VDD
+*   RESULT sane = 1 only if the accepted run is physical; RESULT method = 1 or 2.
+* Stand-in pad ESD diodes on y (reverse leakage ~fA) keep the near-floating output physical.
+* y is unloaded (output buffer / load TBD pending Silicluster).
+.option seed=@SEED@
 .lib @LIB@ @CORNER@
 .include @DIR@/../bias/bias_ref.spice
 .include @DIR@/ota5p.spice
 .include @DIR@/vi_conv.spice
 .include @DIR@/neuron_core.spice
 .temp @TEMP@
-VDD vdd 0 @VDD@
-VX  x   0 PWL(0 0.29 2m 1.21)
+VDD vdd 0 PWL(0 0 20u @VDD@ 2.1m @VDD@)
+VX  x   0 PWL(0 0.29 50u 0.29 2.05m 1.21)
 XN  x y vdd 0 neuron_core
+DESDN 0 y   desd
+DESDP y vdd desd
+.model desd D(is=1e-15 n=1)
+.nodeset v(xn.vk)={0.331*@VDD@} v(xn.vref)={0.142*@VDD@} v(xn.xvs.x)={0.142*@VDD@} v(xn.xvk.x)={0.142*@VDD@}
++ v(xn.gs)=0.4 v(xn.gk)=0.45 v(xn.dk)={@VDD@-1.1} v(xn.s)={@VDD@-0.4} v(y)=0
++ v(xn.vp)={@VDD@-1.1} v(xn.vn)=0.55
 
 .control
-tran 1u 2m 0 2u
+tran 1u 2.05m 0 2u uic
+let chk = abs(v(xn.vk)) + abs(v(xn.vref)) + abs(v(xn.s)) + abs(v(y)) + abs(v(xn.dk))
+meas tran chkmax max chk from=30u
+let method = 1
+if chkmax > 8
+  echo "NOTE: non-physical solution from the power-up start; retrying from a nodeset operating point"
+  alter @VDD[pwl] = [ 0 @VDD@ 2.1m @VDD@ ]
+  tran 1u 2.05m 0 2u
+  let chk = abs(v(xn.vk)) + abs(v(xn.vref)) + abs(v(xn.s)) + abs(v(y)) + abs(v(xn.dk))
+  meas tran chkmax max chk from=30u
+  let method = 2
+end
+let sane = chkmax < 8
+echo "RESULT sane $&sane"
+echo "RESULT method $&method"
 let ivdd = -i(VDD)
-meas tran vk    find v(xn.vk)   at=1m
-meas tran vref  find v(xn.vref) at=1m
+meas tran vk    find v(xn.vk)   at=1.05m
+meas tran vref  find v(xn.vref) at=1.05m
 meas tran y_lo  find v(y) when v(x)=0.3
 meas tran y_mid find v(y) when v(x)=0.9
 meas tran y_hi  find v(y) when v(x)=1.2
@@ -35,8 +66,8 @@ meas tran inl_min min inl from=$&t_a to=$&t_hi
 let yerr = 100 * (v(y) - 2 * (v(x) - vk)) / y_hi
 meas tran err_max max yerr from=$&t_a to=$&t_hi
 meas tran err_min min yerr from=$&t_a to=$&t_hi
-meas tran i_max max ivdd
-meas tran i_avg avg ivdd
+meas tran i_max max ivdd from=60u
+meas tran i_avg avg ivdd from=60u
 let pmax = i_max * @VDD@
 echo "RESULT vk $&vk"
 echo "RESULT vref $&vref"

@@ -1,0 +1,23 @@
+* Monte Carlo sanity check: two identical nfets at the same bias — rendered by scripts/sim.py
+* With a *_mm corner and a different seed per run, their current ratio should vary.
+.option seed=@SEED@
+.lib @LIB@ @CORNER@
+.temp @TEMP@
+VG g 0 0.65
+VD1 d1 0 0.9
+VD2 d2 0 0.9
+XM1 d1 g 0 0 sky130_fd_pr__nfet_01v8 W=8 L=2 nf=1 m=1
+XM2 d2 g 0 0 sky130_fd_pr__nfet_01v8 W=8 L=2 nf=1 m=1
+XRA ra 0 0 sky130_fd_pr__res_xhigh_po_0p69 L=103.5
+XRB rb 0 0 sky130_fd_pr__res_xhigh_po_0p69 L=103.5
+VRA ra 0 1
+VRB rb 0 1
+.control
+op
+let ratio = i(VD2)/i(VD1)
+let rratio = i(VRA)/i(VRB)
+echo "RESULT id_ratio $&ratio"
+echo "RESULT r_ratio $&rratio"
+quit
+.endc
+.end
