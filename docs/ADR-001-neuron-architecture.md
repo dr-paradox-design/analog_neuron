@@ -1,6 +1,6 @@
 # ADR-001: Neuron circuit architecture for Silicluster v3
 
-**Status:** Proposed
+**Status:** Accepted (owner decisions recorded 2026-10-11)
 **Date:** 2026-10-10
 **Deciders:** dr-paradox-design (project owner)
 
@@ -41,6 +41,33 @@ Build a **ratiometric, current-mode neuron with a ReLU activation**:
 Overall: **y = (R_out/R_in) · max(0, w·(x − V_ref) + I_b·R_in)**
 
 Gain depends only on a resistor ratio and a transistor ratio, which track across PVT.
+
+### Refinement after owner decisions (2026-10-11)
+
+The bias term is implemented as a **knee replica** so that every threshold is a VDD ratio:
+
+```
+ VDD ─ R_a ─┬─ V_k ≈ VDD/3 ─ R_b ─┬─ V_ref ≈ 0.14·VDD ─ R_c ─ VSS      (xhigh_po divider)
+            │                      │
+ x ───R_in──┤X_s  OTA_s(+X_s, −V_ref) → MF_s ── sinks I_x = (x − V_ref)/R_in
+ V_k ─R_in──┘X_k  OTA_k(+X_k, −V_ref) → MF_k ── sinks I_k = (V_k − V_ref)/R_in
+
+ MF_s ×2 (NMOS) sinks 2·I_x from node S;  MF_k ×2 → PMOS flip sources 2·I_k into S
+ PMOS diode M_R supplies S only when 2·I_x > 2·I_k  → ReLU
+ PMOS copy of M_R sources I_out into R_out → VSS      → y
+```
+
+**y = 2·(R_out/R_in)·max(0, x − V_k)**
+
+- V_ref cancels (both converters share it); only the two OTA offsets remain.
+- The knee is a resistor ratio of VDD (V_k ≈ 0.6 V at 1.8 V): flat over temperature and
+  process, ±10 % with the supply. R_in of the knee converter is effectively in parallel with
+  R_b, so the divider is sized with that load included.
+- OTAs use a PMOS input pair (input common mode ≈ 0.25 V; an NMOS pair needs ≥ 0.75 V).
+- Precision on the NMOS side (×2 weight mirror, long L); PMOS only as simple mirrors, because
+  pfet_01v8 needs |Vgs| ≈ 1.0–1.2 V (see Findings).
+- R_in ≈ 300 kΩ: I_x ≤ ≈ 3.2 µA, I_out ≤ ≈ 4 µA, y ≤ ≈ 1.2 V; estimated ≈ 29 µA (≈ 52 µW) before
+  the output buffer.
 
 ## Options Considered
 
@@ -185,7 +212,20 @@ These were measured in simulation and change assumptions above.
    temperature). Any neuron threshold built from I_ref·R inherits this. Options are listed as
    question 5 below.
 
-## Open questions for the owner
+## Owner decisions (2026-10-11)
+
+| Question | Decision |
+|---|---|
+| Activation | **ReLU** |
+| Weight and bias | **w = 2**, b set so the ReLU knee sits at **x ≈ 0.6 V** |
+| Input impedance | **≈ 200 kΩ resistive is acceptable** (no input buffer) |
+| Threshold / bias reference | **VDD resistor divider**: V_ref and the bias term track VDD, flat over temperature and process |
+
+Consequence of the VDD-divider choice: thresholds scale with the supply (±10 % VDD → ±10 % in
+V_ref and b), but do not drift with temperature or process. V_ref ≈ 0.14·VDD stays at
+0.227–0.277 V, always below the 0.3 V input floor.
+
+## Open questions for the owner (resolved — kept for history)
 
 1. Values of **w** and **b** (fixed in silicon, no control pins)
 2. **ReLU** (recommended) vs sigmoid

@@ -1,0 +1,22 @@
+* 5-transistor OTA with PMOS input pair — used by the V->I converters
+*
+*            VDD
+*             │
+*            MT (gate VP: PMOS copy of the bias reference, tail = I_ref)
+*             │ T
+*      ┌──────┴──────┐
+*  INP─M1           M2─INN        M1/M2 share their own n-well tied to T (no body effect:
+*      │ D1          │ OUT        lowers |Vgs| ≈ 50 mV, which matters at VDD = 1.62 V)
+*     M3 (diode)    M4
+*      └──── VSS ────┘
+*
+* OUT rises when INP rises (INP drives the diode side of the mirror).
+* Input common mode ≈ 0.25 V: a PMOS pair works down to and below VSS here,
+* an NMOS pair would need ≥ ≈ 0.75 V.
+.subckt ota5p INP INN OUT VP VDD VSS tail_w=16 tail_l=2 in_w=10 in_l=1 ld_w=2 ld_l=2
+XMT T   VP  VDD VDD sky130_fd_pr__pfet_01v8 W={tail_w} L={tail_l} nf=1 m=1
+XM1 D1  INP T   T   sky130_fd_pr__pfet_01v8 W={in_w}   L={in_l}   nf=1 m=1
+XM2 OUT INN T   T   sky130_fd_pr__pfet_01v8 W={in_w}   L={in_l}   nf=1 m=1
+XM3 D1  D1  VSS VSS sky130_fd_pr__nfet_01v8 W={ld_w}   L={ld_l}   nf=1 m=1
+XM4 OUT D1  VSS VSS sky130_fd_pr__nfet_01v8 W={ld_w}   L={ld_l}   nf=1 m=1
+.ends ota5p

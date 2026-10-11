@@ -1,0 +1,34 @@
+* OTA open-loop characterisation at input CM = 0.25 V — rendered by scripts/sim.py
+* Output loaded by 0.5 pF (≈ MF + mirror gate capacitance). DC operating point is set
+* by a 1 GOhm / 1 F feedback trick (OUT -> INN): closed-loop at DC, open-loop for AC.
+* AC gain is OUT/INN, i.e. inverting; magnitude is the open-loop gain.
+.lib @LIB@ @CORNER@
+.include @DIR@/../bias/bias_ref.spice
+.include @DIR@/ota5p.spice
+.temp @TEMP@
+VDD vdd 0 @VDD@
+XB  vdd 0 vp vn bias_ref r_l=17
+VCM inp 0 0.25
+XA  inp inn out vp vdd 0 ota5p
+RF  out fb 1G
+CF  fb 0 1
+VAC inn fb DC 0 AC 1
+CL  out 0 0.5p
+.control
+op
+let vos = v(inp) - v(inn)
+echo "RESULT vos_sys $&vos"
+echo "RESULT vout_dc $&v(out)"
+echo "RESULT v_tail $&v(xa.t)"
+ac dec 20 1 1g
+let gain = db(v(out))
+let ph = 180/PI*cph(-v(out))
+meas ac a0_db find gain at=1
+meas ac ugf when gain=0
+meas ac ph_ugf find ph when gain=0
+echo "RESULT a0_db $&a0_db"
+echo "RESULT ugf $&ugf"
+echo "RESULT ph_ugf $&ph_ugf"
+quit
+.endc
+.end
