@@ -135,13 +135,13 @@ that moves with PVT (to be measured; fixed by switching to an R-tracking referen
 ## Action Items
 
 **Phase 0: Environment (2026-10-11)**
-1. [ ] Build netgen (LVS) from source into `~/.local`; the `netgen` on PATH is the NETGEN 6.2 mesh generator
-2. [ ] Build ngspice ≥ 44 from source (apt version is ngspice-36)
-3. [ ] Add `env.sh`: `PDK_ROOT=$HOME/.ciel`, `PDK=sky130A`
-4. [ ] Smoke tests on an inverter: corner sim, Magic DRC, netgen LVS
+1. [x] Build netgen (LVS) from source into `~/.local`; the `netgen` on PATH is the NETGEN 6.2 mesh generator
+2. [x] Build ngspice ≥ 44 from source (apt version is ngspice-36) — ngspice-47 built
+3. [x] Set `PDK_ROOT=$HOME/.ciel`, `PDK=sky130A` in `~/.zshrc` and `~/.bashrc`
+4. [x] Smoke tests on an inverter: corner sim, Magic DRC, netgen LVS — see `docs/phase0-toolchain-and-smoke-test.md`
 
 **Phase 1: Block design (10-11 → 10-15)**
-5. [ ] gm/Id characterisation of nfet_01v8 / pfet_01v8
+5. [x] gm/Id characterisation of nfet_01v8 / pfet_01v8 (`spice/char/devchar_tb.cir`)
 6. [ ] Bias reference + start-up → V→I → weight mirror → Σ/ReLU → I→V, each with its own testbench
 
 **Phase 2: Full-neuron verification (10-15 → 10-17)**
@@ -161,9 +161,36 @@ that moves with PVT (to be measured; fixed by switching to an R-tracking referen
 **Phase 5: Package (10-25 → 10-28)**
 15. [ ] GDS export, bounding-box and pin checks, `docs/` writeup, `submit/` package, submit 2026-10-28
 
+## Findings from implementation (2026-10-11)
+
+These were measured in simulation and change assumptions above.
+
+1. **pfet_01v8 needs |Vgs| ≈ 1.0–1.35 V at 1 µA** (W = 2 µm, L = 0.5–8 µm, TT 27 °C) versus
+   0.62–0.72 V for nfet_01v8, and more at −40 °C / SS. At VDD = 1.62 V a PMOS diode leaves
+   only ≈ 0.3–0.4 V for anything stacked beneath it.
+   *Consequence:* no PMOS cascodes; PMOS used only as wide, simple mirrors; precision
+   (weight mirror, summing) on the NMOS side; never stack a PMOS diode on an NMOS diode.
+2. **xhigh_po resistor:** 2 kΩ/□, TC1 = −1.47e-3/K (R falls ≈ 20 % from −40 to 125 °C).
+   The PDK R/C corner files (`_ll`, `_hh`, …) **do not vary xhigh_po**, so its sheet-resistance
+   spread is covered manually with ±20 % R in every bias testbench.
+3. **Corner naming:** in this PDK's ngspice library `sf` behaves as fast NMOS / slow PMOS and
+   `fs` as slow NMOS / fast PMOS. Results are interpreted by device behaviour.
+4. **Bias reference** runs M1/M2 in weak–moderate inversion, where I ≈ n·UT·ln K / R: the
+   current is PTAT/R (≈ 2.2× over −40…125 °C) instead of ≈ 3.5× in strong inversion.
+   Result: 1.13–3.89 µA over 45 PVT points and R ±20 % (target 1–5 µA).
+5. **Start-up false state:** at −40 °C / 1.62 V the PMOS gate line falls below the NMOS gate
+   line, so a start-up device connected between them conducts backwards and holds the loop
+   at ≈ 0.3 µA. The kick device now injects from VDD into the NMOS gate line.
+6. **Bias term drift (open):** the reference makes I·R ∝ n·UT·ln K, i.e. PTAT (≈ 1.7× over
+   temperature). Any neuron threshold built from I_ref·R inherits this. Options are listed as
+   question 5 below.
+
 ## Open questions for the owner
 
 1. Values of **w** and **b** (fixed in silicon, no control pins)
 2. **ReLU** (recommended) vs sigmoid
 3. Is a **≈ 100–250 kΩ input impedance** acceptable?
-4. Approval to build netgen and ngspice from source (may need one `sudo apt install` for build dependencies)
+4. ~~Approval to build netgen and ngspice from source~~ — done, no sudo needed
+5. **Threshold/bias accuracy over temperature:** keep thresholds tied to I_ref·R (PTAT, simplest),
+   tie them to VDD with a resistor divider (temperature-flat, tracks the ±10 % supply), or add a
+   CMOS temperature-compensated voltage reference (flattest, more area and design time)?

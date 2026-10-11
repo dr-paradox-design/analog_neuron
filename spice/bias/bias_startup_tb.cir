@@ -1,0 +1,52 @@
+* Bias reference start-up transient — rendered by scripts/sim.py
+* Four copies, each on its own supply profile:
+*   F: 0 -> VDD in 1 us        M: 0 -> VDD in 100 us
+*   S: 0 -> VDD in 5 ms        D: up in 10 us, dip to 0.8 V at 2 ms for 50 us, back up
+.lib @LIB@ @CORNER@
+.include @DIR@/bias_ref.spice
+.temp @TEMP@
+.param rl=17
+
+VDF vdf 0 PWL(0 0 1u @VDD@)
+VDM vdm 0 PWL(0 0 100u @VDD@)
+VDS vds 0 PWL(0 0 5m @VDD@)
+VDD vdd 0 PWL(0 0 10u @VDD@ 2m @VDD@ 2.01m 0.8 2.06m 0.8 2.07m @VDD@)
+
+XBF vdf 0 vpf vnf bias_ref r_l={rl}
+XBM vdm 0 vpm vnm bias_ref r_l={rl}
+XBS vds 0 vps vns bias_ref r_l={rl}
+XBD vdd 0 vpd vnd bias_ref r_l={rl}
+
+* delivered current: NMOS copy of M1 sinking from a fixed 0.9 V node
+XOF of vnf 0 0 sky130_fd_pr__nfet_01v8 W=20 L=2 nf=1 m=1
+VOF of 0 0.9
+XOM om vnm 0 0 sky130_fd_pr__nfet_01v8 W=20 L=2 nf=1 m=1
+VOM om 0 0.9
+XOS os vns 0 0 sky130_fd_pr__nfet_01v8 W=20 L=2 nf=1 m=1
+VOS os 0 0.9
+XOD od vnd 0 0 sky130_fd_pr__nfet_01v8 W=20 L=2 nf=1 m=1
+VOD od 0 0.9
+
+.control
+tran 1u 6m 0 5u
+let i_f = -i(VOF)
+let i_m = -i(VOM)
+let i_s = -i(VOS)
+let i_d = -i(VOD)
+meas tran i_fast   avg i_f from=5.8m to=6m
+meas tran i_med    avg i_m from=5.8m to=6m
+meas tran i_slow   avg i_s from=5.8m to=6m
+meas tran i_dip    avg i_d from=5.8m to=6m
+meas tran i_predip avg i_d from=1.8m to=2m
+meas tran t_fast90 when i_f=0.9*i_fast rise=1
+meas tran st_slow  find v(xbs.st) at=6m
+echo "RESULT i_fast   $&i_fast"
+echo "RESULT i_med    $&i_med"
+echo "RESULT i_slow   $&i_slow"
+echo "RESULT i_dip    $&i_dip"
+echo "RESULT i_predip $&i_predip"
+echo "RESULT t_fast90 $&t_fast90"
+echo "RESULT st_slow  $&st_slow"
+quit
+.endc
+.end
