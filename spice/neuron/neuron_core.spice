@@ -1,0 +1,32 @@
+* Single-input current-mode ReLU neuron core:  y = 2 * (R_out/R_in) * max(0, x - V_k)
+*
+*  VDD ─ Ra(9u) ─┬─ VK ─ Rb(4u) ─┬─ VREF ─ Rc(3u) ─ VSS     u = unit xhigh_po 0.69 x 14.79 um (~41 k)
+*                │                │
+*  X  ── R_in(7u) ── XVS (V->I) ── GS ─► XWS (x2) sinks 2(I_x + I0) from S
+*  VK ── R_k (7u) ── XVK (V->I) ── GK ─► XWK (x2) sinks 2(I_k + I0) from DK
+*                                         XPK1 (diode at DK) / XPK2 sources 2(I_k + I0) into S
+*  S: XPR1 (PMOS diode) supplies only the excess 2(I_x - I_k) > 0   → ReLU
+*  XPR2 copies it into R_out(7u) → Y
+*
+*  I_x = (x - VREF)/R_in, I_k = (VK - VREF)/R_in; VREF and I0 cancel.
+*  Divider: R_k draws (VK - VREF)/R_k out of VK but returns it to VSS through MF_k, not into
+*  VREF, so  VK = VREF (1 + Rb/Rc)  and  (VDD - VK)/Ra = (VK - VREF)(1/Rb + 1/R_k).
+*  With Ra:Rb:Rc:R_k = 9:4:3:7 → VREF = 0.1419 VDD (0.255 V), VK = 0.331 VDD (0.596 V).
+.subckt neuron_core X Y VDD VSS ru=14.79 pk_w=16 pk_l=2 pr_w=32 pr_l=8 w_w=8 w_l=2
+XBIAS VDD VSS VP VN bias_ref r_l=17
+XRA VDD  VK   VSS sky130_fd_pr__res_xhigh_po_0p69 L={9*ru}
+XRB VK   VREF VSS sky130_fd_pr__res_xhigh_po_0p69 L={4*ru}
+XRC VREF VSS  VSS sky130_fd_pr__res_xhigh_po_0p69 L={3*ru}
+XVS X    VREF GS VP VDD VSS vi_conv r_l={7*ru}
+XVK VK   VREF GK VP VDD VSS vi_conv r_l={7*ru}
+* weight mirrors (w = 2: m=2 copies of MF, W=8 L=2)
+XWS S    GS VSS VSS sky130_fd_pr__nfet_01v8 W={w_w} L={w_l} nf=1 m=2
+XWK DK   GK VSS VSS sky130_fd_pr__nfet_01v8 W={w_w} L={w_l} nf=1 m=2
+* knee current flipped to a source into S
+XPK1 DK  DK VDD VDD sky130_fd_pr__pfet_01v8 W={pk_w} L={pk_l} nf=1 m=1
+XPK2 S   DK VDD VDD sky130_fd_pr__pfet_01v8 W={pk_w} L={pk_l} nf=1 m=1
+* ReLU diode and output copy
+XPR1 S   S  VDD VDD sky130_fd_pr__pfet_01v8 W={pr_w} L={pr_l} nf=1 m=1
+XPR2 Y   S  VDD VDD sky130_fd_pr__pfet_01v8 W={pr_w} L={pr_l} nf=1 m=1
+XRO Y    VSS VSS sky130_fd_pr__res_xhigh_po_0p69 L={7*ru}
+.ends neuron_core

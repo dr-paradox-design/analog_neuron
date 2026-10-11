@@ -1,0 +1,55 @@
+* Neuron core transfer, linearity and power — rendered by scripts/sim.py
+* x ramps 0.29 -> 1.21 V over 2 ms (quasi-static for a MHz-bandwidth circuit). A DC sweep
+* of x needs repeated gmin-stepping rescues on this circuit; the slow ramp is robust and
+* also shows any oscillation. y is unloaded (output buffer / load TBD pending Silicluster).
+.lib @LIB@ @CORNER@
+.include @DIR@/../bias/bias_ref.spice
+.include @DIR@/ota5p.spice
+.include @DIR@/vi_conv.spice
+.include @DIR@/neuron_core.spice
+.temp @TEMP@
+VDD vdd 0 @VDD@
+VX  x   0 PWL(0 0.29 2m 1.21)
+XN  x y vdd 0 neuron_core
+
+.control
+tran 1u 2m 0 2u
+let ivdd = -i(VDD)
+meas tran vk    find v(xn.vk)   at=1m
+meas tran vref  find v(xn.vref) at=1m
+meas tran y_lo  find v(y) when v(x)=0.3
+meas tran y_mid find v(y) when v(x)=0.9
+meas tran y_hi  find v(y) when v(x)=1.2
+meas tran t_hi  when v(x)=1.2
+* linear region: endpoint line from x = vk + 0.1 to 1.2
+let xa = vk + 0.1
+meas tran t_a when v(x)=$&xa
+meas tran ya  find v(y) at=$&t_a
+let slope = (y_hi - ya) / (1.2 - xa)
+let knee  = xa - ya / slope
+let line  = ya + (v(x) - xa) * slope
+let inl   = 100 * (v(y) - line) / y_hi
+meas tran inl_max max inl from=$&t_a to=$&t_hi
+meas tran inl_min min inl from=$&t_a to=$&t_hi
+* error vs the ideal transfer from the actual divider: y = 2 (x - vk)
+let yerr = 100 * (v(y) - 2 * (v(x) - vk)) / y_hi
+meas tran err_max max yerr from=$&t_a to=$&t_hi
+meas tran err_min min yerr from=$&t_a to=$&t_hi
+meas tran i_max max ivdd
+meas tran i_avg avg ivdd
+let pmax = i_max * @VDD@
+echo "RESULT vk $&vk"
+echo "RESULT vref $&vref"
+echo "RESULT y_lo $&y_lo"
+echo "RESULT y_mid $&y_mid"
+echo "RESULT y_hi $&y_hi"
+echo "RESULT slope $&slope"
+echo "RESULT knee $&knee"
+echo "RESULT inl_max_pct $&inl_max"
+echo "RESULT inl_min_pct $&inl_min"
+echo "RESULT err_max_pct $&err_max"
+echo "RESULT err_min_pct $&err_min"
+echo "RESULT pwr_max $&pmax"
+quit
+.endc
+.end
