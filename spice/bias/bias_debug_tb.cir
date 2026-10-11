@@ -3,11 +3,11 @@
 .include @DIR@/bias_ref.spice
 .temp @TEMP@
 VDD vdd 0 @VDD@
-XB vdd 0 vp vn bias_ref r_l=20
+XB vdd 0 vp vn bias_ref r_l=17
 XO o vp vdd vdd sky130_fd_pr__pfet_01v8 W=16 L=2 nf=1 m=1
 VO o 0 0.9
 .control
-save all @m.xb.xm1.msky130_fd_pr__nfet_01v8[id] @m.xb.xm2.msky130_fd_pr__nfet_01v8[id] @m.xb.xms3.msky130_fd_pr__nfet_01v8[id] @m.xb.xms2.msky130_fd_pr__nfet_01v8[id] @m.xb.xms1b.msky130_fd_pr__pfet_01v8[id] @m.xb.xm2.msky130_fd_pr__nfet_01v8[vdsat] @m.xb.xm2.msky130_fd_pr__nfet_01v8[vds]
+save all @m.xb.xm3.msky130_fd_pr__pfet_01v8[id] @m.xb.xm4.msky130_fd_pr__pfet_01v8[id] @m.xb.xm1.msky130_fd_pr__nfet_01v8[id] @m.xb.xm2.msky130_fd_pr__nfet_01v8[id] @m.xb.xms3.msky130_fd_pr__nfet_01v8[id] @m.xb.xms2.msky130_fd_pr__nfet_01v8[id] @m.xb.xms1b.msky130_fd_pr__pfet_01v8[id] @m.xb.xm2.msky130_fd_pr__nfet_01v8[vdsat] @m.xb.xm2.msky130_fd_pr__nfet_01v8[vds]
 op
 echo "RESULT v_vp $&v(vp)"
 echo "RESULT v_vn $&v(vn)"
@@ -19,6 +19,8 @@ echo "RESULT id_ms3 $&@m.xb.xms3.msky130_fd_pr__nfet_01v8[id]"
 echo "RESULT id_ms2 $&@m.xb.xms2.msky130_fd_pr__nfet_01v8[id]"
 echo "RESULT id_ms1b $&@m.xb.xms1b.msky130_fd_pr__pfet_01v8[id]"
 echo "RESULT iout $&i(VO)"
+echo "RESULT id_m3 $&@m.xb.xm3.msky130_fd_pr__pfet_01v8[id]"
+echo "RESULT id_m4 $&@m.xb.xm4.msky130_fd_pr__pfet_01v8[id]"
 quit
 .endc
 .end

@@ -2,7 +2,8 @@
 """Run an ngspice testbench template at one or more PVT points.
 
 The template may use these placeholders:
-  @LIB@     path to sky130.lib.spice      @CORNER@  tt/ff/ss/sf/fs
+  @LIB@     path to sky130.lib.spice      @CORNER@  tt/ff/ss/sf/fs (or any .lib section,
+                                                    e.g. ss_hh = slow MOS + high R/C)
   @TEMP@    temperature in degC           @VDD@     supply voltage
   @VDDH@    VDD/2                          @DIR@     absolute dir of the template
 
@@ -14,6 +15,7 @@ Usage:
   scripts/sim.py spice/smoke/inv_tb.cir                 # tt, 27 C, 1.8 V
   scripts/sim.py spice/smoke/inv_tb.cir --pvt           # 5 corners x 3 temps x 3 VDD
   scripts/sim.py tb.cir --corner ss --temp 125 --vdd 1.62
+  scripts/sim.py tb.cir --pvt --corners tt,ss_hh,ff_ll  # custom corner list
 """
 import argparse
 import itertools
@@ -82,22 +84,25 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("testbench", type=pathlib.Path)
-    ap.add_argument("--corner", default="tt", choices=CORNERS)
+    ap.add_argument("--corner", default="tt")
     ap.add_argument("--temp", type=float, default=27.0)
     ap.add_argument("--vdd", type=float, default=1.8)
     ap.add_argument("--pvt", action="store_true", help="sweep all corners/temps/VDDs")
     ap.add_argument("--corners-only", action="store_true",
-                    help="sweep the 5 process corners at 27 C, 1.8 V")
+                    help="sweep the process corners at 27 C, 1.8 V")
+    ap.add_argument("--corners", help="comma-separated corner list for --pvt / --corners-only "
+                    "(default: tt,ff,ss,sf,fs)")
     args = ap.parse_args()
 
     template = args.testbench.resolve()
     outdir = ROOT / "build" / "sim" / template.stem
     outdir.mkdir(parents=True, exist_ok=True)
 
+    corners = args.corners.split(",") if args.corners else CORNERS
     if args.pvt:
-        points = list(itertools.product(CORNERS, TEMPS, VDDS))
+        points = list(itertools.product(corners, TEMPS, VDDS))
     elif args.corners_only:
-        points = [(c, 27, 1.8) for c in CORNERS]
+        points = [(c, 27, 1.8) for c in corners]
     else:
         t = int(args.temp) if args.temp.is_integer() else args.temp
         points = [(args.corner, t, args.vdd)]

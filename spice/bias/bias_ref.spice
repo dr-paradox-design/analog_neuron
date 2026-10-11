@@ -4,7 +4,7 @@
 *        M3 (gate VP)   M4 (diode, VP)   MS1a+b weak pull-up (gate VSS)
 *         │ VN           │ VP            │ ST
 *        M1 (diode)     M2 (K×)         MS2 (gate VN) pulls ST low once running
-*         │              │ NS            MS3 (gate ST): VP → VN kick while ST is high
+*         │              │ NS            MS3 (gate ST): VDD → VN kick while ST is high
 *        VSS            R1 → VSS
 *
 * The NMOS diode (M1) and the PMOS diode (M4) sit in different branches: SKY130
@@ -20,10 +20,12 @@ XR1 NS VSS VSS sky130_fd_pr__res_xhigh_po_1p41 L={r_l}
 XM3 VN VP VDD VDD sky130_fd_pr__pfet_01v8 W={p_w} L={p_l} nf=1 m=1
 XM4 VP VP VDD VDD sky130_fd_pr__pfet_01v8 W={p_w} L={p_l} nf=1 m=1
 * start-up: MS1a/MS1b are a very weak, always-on pull-up (two long PMOS in series);
-* MS2 must overpower it by a wide margin at every corner so ST drops near VSS and
-* MS3 turns fully off once the reference is running.
-XMS1A ST1 VSS VDD VDD sky130_fd_pr__pfet_01v8 W=0.42 L=20 nf=1 m=1
-XMS1B ST  VSS ST1 VDD sky130_fd_pr__pfet_01v8 W=0.42 L=20 nf=1 m=1
-XMS2  ST  VN  VSS VSS sky130_fd_pr__nfet_01v8 W=8 L=0.5 nf=1 m=1
-XMS3  VP  ST  VN  VSS sky130_fd_pr__nfet_01v8 W=1 L=1 nf=1 m=1
+* MS2 overpowers it by a wide margin at every corner, so ST drops near VSS and MS3
+* turns fully off once the reference runs. MS3 injects from VDD into VN: at
+* -40 C / 1.62 V the PMOS gate line VP sits *below* VN, so a VP->VN kick device
+* conducts backwards and holds the loop in a false low-current state.
+XMS1A ST1 VSS VDD VDD sky130_fd_pr__pfet_01v8 W=0.42 L=40 nf=1 m=1
+XMS1B ST  VSS ST1 VDD sky130_fd_pr__pfet_01v8 W=0.42 L=40 nf=1 m=1
+XMS2  ST  VN  VSS VSS sky130_fd_pr__nfet_01v8 W=16 L=0.5 nf=1 m=1
+XMS3  VDD ST  VN  VSS sky130_fd_pr__nfet_01v8 W=1 L=1 nf=1 m=1
 .ends bias_ref

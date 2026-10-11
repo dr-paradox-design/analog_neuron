@@ -1,0 +1,45 @@
+* Bias reference PVT testbench — rendered by scripts/sim.py
+* Three references: nominal R, R-20 %, R+20 % (the PDK corners do not vary
+* xhigh_po sheet resistance, so its process spread is covered here by hand).
+.lib @LIB@ @CORNER@
+.include @DIR@/bias_ref.spice
+.temp @TEMP@
+.param rl=17
+
+VDD vdd 0 @VDD@
+XB  vdd 0 vp  vn  bias_ref r_l={rl}
+XBL vdd 0 vpl vnl bias_ref r_l={rl*0.8}
+XBH vdd 0 vph vnh bias_ref r_l={rl*1.2}
+
+* delivered current: PMOS copy (same size as M3/M4) into a 0.9 V node
+XO  o  vp  vdd vdd sky130_fd_pr__pfet_01v8 W=16 L=2 nf=1 m=1
+VO  o  0 0.9
+XOL ol vpl vdd vdd sky130_fd_pr__pfet_01v8 W=16 L=2 nf=1 m=1
+VOL ol 0 0.9
+XOH oh vph vdd vdd sky130_fd_pr__pfet_01v8 W=16 L=2 nf=1 m=1
+VOH oh 0 0.9
+* NMOS copy (same size as M1) sinking from a 0.9 V node
+XON on vn 0 0 sky130_fd_pr__nfet_01v8 W=20 L=2 nf=1 m=1
+VON on 0 0.9
+
+.control
+save all @m.xb.xm2.msky130_fd_pr__nfet_01v8[vdsat] @m.xb.xm2.msky130_fd_pr__nfet_01v8[vds] @m.xb.xms3.msky130_fd_pr__nfet_01v8[id]
+op
+let i_nom = i(VO)
+let i_rlo = i(VOL)
+let i_rhi = i(VOH)
+let i_ncopy = -i(VON)
+let m2_margin = @m.xb.xm2.msky130_fd_pr__nfet_01v8[vds] - @m.xb.xm2.msky130_fd_pr__nfet_01v8[vdsat]
+let vsg_m4 = @VDD@ - v(vp)
+let i_startup = @m.xb.xms3.msky130_fd_pr__nfet_01v8[id]
+echo "RESULT i_nom $&i_nom"
+echo "RESULT i_rlo $&i_rlo"
+echo "RESULT i_rhi $&i_rhi"
+echo "RESULT i_ncopy $&i_ncopy"
+echo "RESULT m2_margin $&m2_margin"
+echo "RESULT vsg_m4 $&vsg_m4"
+echo "RESULT v_st $&v(xb.st)"
+echo "RESULT i_startup $&i_startup"
+quit
+.endc
+.end
