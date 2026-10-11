@@ -1,0 +1,52 @@
+* Find the resistor length for ~2 uA at TT — one reference per R value
+.lib @LIB@ @CORNER@
+.include @DIR@/bias_ref.spice
+.temp @TEMP@
+.param vdd=@VDD@
+VDD8 vdd8 0 @VDD@
+XB8 vdd8 0 vp8 vn8 bias_ref r_l=8
+XO8 o8 vp8 vdd8 vdd8 sky130_fd_pr__pfet_01v8 W=16 L=2 nf=1 m=1
+VO8 o8 0 0.9
+VDD12 vdd12 0 @VDD@
+XB12 vdd12 0 vp12 vn12 bias_ref r_l=12
+XO12 o12 vp12 vdd12 vdd12 sky130_fd_pr__pfet_01v8 W=16 L=2 nf=1 m=1
+VO12 o12 0 0.9
+VDD16 vdd16 0 @VDD@
+XB16 vdd16 0 vp16 vn16 bias_ref r_l=16
+XO16 o16 vp16 vdd16 vdd16 sky130_fd_pr__pfet_01v8 W=16 L=2 nf=1 m=1
+VO16 o16 0 0.9
+VDD20 vdd20 0 @VDD@
+XB20 vdd20 0 vp20 vn20 bias_ref r_l=20
+XO20 o20 vp20 vdd20 vdd20 sky130_fd_pr__pfet_01v8 W=16 L=2 nf=1 m=1
+VO20 o20 0 0.9
+VDD24 vdd24 0 @VDD@
+XB24 vdd24 0 vp24 vn24 bias_ref r_l=24
+XO24 o24 vp24 vdd24 vdd24 sky130_fd_pr__pfet_01v8 W=16 L=2 nf=1 m=1
+VO24 o24 0 0.9
+VDD30 vdd30 0 @VDD@
+XB30 vdd30 0 vp30 vn30 bias_ref r_l=30
+XO30 o30 vp30 vdd30 vdd30 sky130_fd_pr__pfet_01v8 W=16 L=2 nf=1 m=1
+VO30 o30 0 0.9
+VDD40 vdd40 0 @VDD@
+XB40 vdd40 0 vp40 vn40 bias_ref r_l=40
+XO40 o40 vp40 vdd40 vdd40 sky130_fd_pr__pfet_01v8 W=16 L=2 nf=1 m=1
+VO40 o40 0 0.9
+.control
+op
+let i8 = i(VO8)
+echo "RESULT iout_lr8 $&i8"
+let i12 = i(VO12)
+echo "RESULT iout_lr12 $&i12"
+let i16 = i(VO16)
+echo "RESULT iout_lr16 $&i16"
+let i20 = i(VO20)
+echo "RESULT iout_lr20 $&i20"
+let i24 = i(VO24)
+echo "RESULT iout_lr24 $&i24"
+let i30 = i(VO30)
+echo "RESULT iout_lr30 $&i30"
+let i40 = i(VO40)
+echo "RESULT iout_lr40 $&i40"
+quit
+.endc
+.end

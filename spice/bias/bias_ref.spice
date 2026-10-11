@@ -1,0 +1,29 @@
+* Self-biased beta-multiplier (constant-gm) current reference with start-up
+*
+*   VDD ──┬──────────────┬───────────────┐
+*        M3 (gate VP)   M4 (diode, VP)   MS1a+b weak pull-up (gate VSS)
+*         │ VN           │ VP            │ ST
+*        M1 (diode)     M2 (K×)         MS2 (gate VN) pulls ST low once running
+*         │              │ NS            MS3 (gate ST): VP → VN kick while ST is high
+*        VSS            R1 → VSS
+*
+* The NMOS diode (M1) and the PMOS diode (M4) sit in different branches: SKY130
+* pfet_01v8 needs |Vgs| ≈ 1.0–1.3 V, so the two diodes stacked (≈ 2 V) would not
+* fit in VDD = 1.62 V. M1/M2 run in weak–moderate inversion, where the current
+* tracks n·UT·ln(K)/R (≈ 2× over −40…125 °C instead of ≈ 3.5× in strong inversion).
+*
+* Ports: VP / VN are the gate lines for PMOS / NMOS mirror copies of the reference.
+.subckt bias_ref VDD VSS VP VN n_w=20 n_l=2 kmul=4 p_w=16 p_l=2 r_l=18
+XM1 VN VN VSS VSS sky130_fd_pr__nfet_01v8 W={n_w} L={n_l} nf=1 m=1
+XM2 VP VN NS  VSS sky130_fd_pr__nfet_01v8 W={n_w} L={n_l} nf=1 m={kmul}
+XR1 NS VSS VSS sky130_fd_pr__res_xhigh_po_1p41 L={r_l}
+XM3 VN VP VDD VDD sky130_fd_pr__pfet_01v8 W={p_w} L={p_l} nf=1 m=1
+XM4 VP VP VDD VDD sky130_fd_pr__pfet_01v8 W={p_w} L={p_l} nf=1 m=1
+* start-up: MS1a/MS1b are a very weak, always-on pull-up (two long PMOS in series);
+* MS2 must overpower it by a wide margin at every corner so ST drops near VSS and
+* MS3 turns fully off once the reference is running.
+XMS1A ST1 VSS VDD VDD sky130_fd_pr__pfet_01v8 W=0.42 L=20 nf=1 m=1
+XMS1B ST  VSS ST1 VDD sky130_fd_pr__pfet_01v8 W=0.42 L=20 nf=1 m=1
+XMS2  ST  VN  VSS VSS sky130_fd_pr__nfet_01v8 W=8 L=0.5 nf=1 m=1
+XMS3  VP  ST  VN  VSS sky130_fd_pr__nfet_01v8 W=1 L=1 nf=1 m=1
+.ends bias_ref
