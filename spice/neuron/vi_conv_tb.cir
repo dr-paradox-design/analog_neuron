@@ -1,0 +1,39 @@
+* V->I converter DC transfer and linearity, x = 0.3..1.2 V — rendered by scripts/sim.py
+* VREF is an ideal 0.25 V source here (block-level test); loop stability is in vi_stab_tb.cir.
+.lib @LIB@ @CORNER@
+.include @DIR@/../bias/bias_ref.spice
+.include @DIR@/ota5p.spice
+.include @DIR@/vi_conv.spice
+.temp @TEMP@
+VDD  vdd  0 @VDD@
+XB   vdd  0 vp vn bias_ref r_l=17
+VREF vref 0 0.25
+VX   x    0 0.75
+XV   x vref g vp vdd 0 vi_conv
+* mirror copy x2 into a 0.6 V node (stands in for the summing node)
+XC   c g 0 0 sky130_fd_pr__nfet_01v8 W=8 L=2 nf=1 m=2
+VC   c 0 0.6
+
+.control
+dc VX 0.29 1.21 0.005
+let icopy = -i(VC)
+let verr  = v(xv.x) - 0.25
+meas dc i_lo find icopy at=0.3
+meas dc i_hi find icopy at=1.2
+let ideal = i_lo + (v(x) - 0.3) * (i_hi - i_lo) / 0.9
+let inl = 100 * (icopy - ideal) / (i_hi - i_lo)
+meas dc inl_max max inl from=0.3 to=1.2
+meas dc inl_min min inl from=0.3 to=1.2
+meas dc verr_max max verr from=0.3 to=1.2
+meas dc verr_min min verr from=0.3 to=1.2
+let gm_eff = (i_hi - i_lo) / 0.9
+echo "RESULT i_lo $&i_lo"
+echo "RESULT i_hi $&i_hi"
+echo "RESULT gain_uA_per_V $&gm_eff"
+echo "RESULT inl_max_pct $&inl_max"
+echo "RESULT inl_min_pct $&inl_min"
+echo "RESULT verr_max $&verr_max"
+echo "RESULT verr_min $&verr_min"
+quit
+.endc
+.end

@@ -1,0 +1,29 @@
+* Bias reference quasi-static power-up/down — rendered by scripts/sim.py
+* DC sweep of VDD 0 -> VDD -> 0: each point starts from the previous solution, so
+* this follows the path of an infinitely slow ramp (up) and a slow brown-out (down).
+.lib @LIB@ @CORNER@
+.include @DIR@/bias_ref.spice
+.temp @TEMP@
+.param rl=17
+
+VDD vdd 0 0
+XB vdd 0 vp vn bias_ref r_l={rl}
+XO o vn 0 0 sky130_fd_pr__nfet_01v8 W=20 L=2 nf=1 m=1
+VO o 0 0.9
+
+.control
+dc VDD 0 @VDD@ 0.002
+let iup = -i(VO)
+meas dc i_up   find iup at=@VDD@
+meas dc v_on   when iup=0.5*i_up rise=1
+meas dc st_up  find v(xb.st) at=@VDD@
+echo "RESULT i_up  $&i_up"
+echo "RESULT v_on  $&v_on"
+echo "RESULT st_up $&st_up"
+dc VDD @VDD@ 0 -0.002
+let idn = -i(VO)
+meas dc i_down find idn at=@VDD@
+echo "RESULT i_down $&i_down"
+quit
+.endc
+.end

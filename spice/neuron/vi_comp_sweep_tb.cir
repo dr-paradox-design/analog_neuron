@@ -1,0 +1,87 @@
+* V->I converter compensation sweep — rendered by scripts/sim.py
+* Each variant: open-loop copy (loop broken at the OTA + input), own bias reference.
+.lib @LIB@ @CORNER@
+.include @DIR@/../bias/bias_ref.spice
+.include @DIR@/ota5p.spice
+.temp @TEMP@
+VDD  vdd  0 @VDD@
+VREF vref 0 0.25
+VAC  vac  0 DC 0 AC 1
+VXA  xa   0 0.75
+
+.subckt vi_open XA VREF XN VAC VDD VSS cc_w=10 cc_l=10 rz_l=0.5 i0_w=4
+XB   VDD VSS vp vn bias_ref r_l=17
+XR   XA  XN  VSS sky130_fd_pr__res_xhigh_po_0p69 L=103.5
+XA1  INA VREF G vp VDD VSS ota5p
+XMF  XN  G   VSS VSS sky130_fd_pr__nfet_01v8 W=8 L=2 nf=1 m=1
+XI0  XN  vp  VDD VDD sky130_fd_pr__pfet_01v8 W={i0_w} L=2 nf=1 m=1
+XRZ  G   GC  VSS sky130_fd_pr__res_xhigh_po_0p69 L={rz_l}
+XCC  GC  XN  sky130_fd_pr__cap_mim_m3_1 W={cc_w} L={cc_l}
+XC   C   G   VSS VSS sky130_fd_pr__nfet_01v8 W=8 L=2 nf=1 m=2
+VC   C   VSS 0.6
+LBRK XN  INA 1G
+CBRK INA VAC 1
+.ends vi_open
+XA xa vref xnA vac vdd 0 vi_open cc_w=10 cc_l=10 rz_l=0.5 i0_w=4
+XB xa vref xnB vac vdd 0 vi_open cc_w=20 cc_l=20 rz_l=25 i0_w=8
+XC xa vref xnC vac vdd 0 vi_open cc_w=20 cc_l=20 rz_l=12 i0_w=8
+XD xa vref xnD vac vdd 0 vi_open cc_w=15 cc_l=15 rz_l=17 i0_w=8
+XE xa vref xnE vac vdd 0 vi_open cc_w=25 cc_l=25 rz_l=17 i0_w=8
+XF xa vref xnF vac vdd 0 vi_open cc_w=15 cc_l=15 rz_l=17 i0_w=4
+
+.control
+foreach xv 0.3 0.75 1.2
+  alter VXA dc=$xv
+  ac dec 20 10 1g
+  let lgA = mag(v(xnA))
+  let phA = 180/PI*cph(v(xnA))
+  meas ac phdcA find phA at=10
+  meas ac fcA when lgA=1
+  meas ac phcA find phA when lgA=1
+  let pmA = phcA - (phdcA - 180)
+  echo "RESULT pmA_x$xv $&pmA"
+  echo "RESULT fcA_x$xv $&fcA"
+  let lgB = mag(v(xnB))
+  let phB = 180/PI*cph(v(xnB))
+  meas ac phdcB find phB at=10
+  meas ac fcB when lgB=1
+  meas ac phcB find phB when lgB=1
+  let pmB = phcB - (phdcB - 180)
+  echo "RESULT pmB_x$xv $&pmB"
+  echo "RESULT fcB_x$xv $&fcB"
+  let lgC = mag(v(xnC))
+  let phC = 180/PI*cph(v(xnC))
+  meas ac phdcC find phC at=10
+  meas ac fcC when lgC=1
+  meas ac phcC find phC when lgC=1
+  let pmC = phcC - (phdcC - 180)
+  echo "RESULT pmC_x$xv $&pmC"
+  echo "RESULT fcC_x$xv $&fcC"
+  let lgD = mag(v(xnD))
+  let phD = 180/PI*cph(v(xnD))
+  meas ac phdcD find phD at=10
+  meas ac fcD when lgD=1
+  meas ac phcD find phD when lgD=1
+  let pmD = phcD - (phdcD - 180)
+  echo "RESULT pmD_x$xv $&pmD"
+  echo "RESULT fcD_x$xv $&fcD"
+  let lgE = mag(v(xnE))
+  let phE = 180/PI*cph(v(xnE))
+  meas ac phdcE find phE at=10
+  meas ac fcE when lgE=1
+  meas ac phcE find phE when lgE=1
+  let pmE = phcE - (phdcE - 180)
+  echo "RESULT pmE_x$xv $&pmE"
+  echo "RESULT fcE_x$xv $&fcE"
+  let lgF = mag(v(xnF))
+  let phF = 180/PI*cph(v(xnF))
+  meas ac phdcF find phF at=10
+  meas ac fcF when lgF=1
+  meas ac phcF find phF when lgF=1
+  let pmF = phcF - (phdcF - 180)
+  echo "RESULT pmF_x$xv $&pmF"
+  echo "RESULT fcF_x$xv $&fcF"
+end
+quit
+.endc
+.end

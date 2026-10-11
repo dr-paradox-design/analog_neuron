@@ -1,0 +1,19 @@
+* V->I converter: holds node X at VREF and sinks I = (IN - VREF)/R_in + I0 through MF
+*
+*   IN ──R_in── X ──┬── OTA INP (+)          VREF ── OTA INN (−)
+*                   ├── MF drain   (MF gate = G = OTA output; copies of MF mirror the current)
+*                   ├── I0: PMOS copy of the bias (≈ I_ref/4) keeps MF out of deep
+*                   │   subthreshold so the loop gain/bandwidth do not collapse at small x;
+*                   │   the knee replica carries the same I0, so it cancels at the summing node
+*                   └── Cc + Rz to G (Miller compensation around MF; Rz cancels the
+*                       right-half-plane zero and adds phase at small MF current)
+*
+* Ports: IN VREF G VP VDD VSS
+.subckt vi_conv IN VREF G VP VDD VSS r_l=103.5 mf_w=8 mf_l=2 cc_w=15 cc_l=15 rz_l=17 i0_w=8
+XR  IN  X   VSS sky130_fd_pr__res_xhigh_po_0p69 L={r_l}
+XA  X   VREF G VP VDD VSS ota5p
+XMF X   G   VSS VSS sky130_fd_pr__nfet_01v8 W={mf_w} L={mf_l} nf=1 m=1
+XI0 X   VP  VDD VDD sky130_fd_pr__pfet_01v8 W={i0_w} L=2 nf=1 m=1
+XRZ G   GC  VSS sky130_fd_pr__res_xhigh_po_0p69 L={rz_l}
+XCC GC  X   sky130_fd_pr__cap_mim_m3_1 W={cc_w} L={cc_l}
+.ends vi_conv
