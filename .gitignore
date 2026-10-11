@@ -12,3 +12,6 @@ spice/*.log
 *~
 *.swp
 .DS_Store
+
+# Generated build output (sims, extraction, scratch)
+build/

@@ -1,0 +1,37 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1791693915
+<< checkpaint >>
+rect -1710 -1760 1710 2690
+<< metal1 >>
+rect -450 1330 450 1430
+rect 135 1179 181 1330
+rect -29 1071 29 1169
+rect -400 807 -21 853
+rect 21 807 181 853
+rect -400 23 -354 807
+rect -29 132 29 589
+rect -400 -23 -21 23
+rect 21 -23 181 23
+rect -29 -230 29 -132
+rect 135 -400 181 -240
+rect -450 -500 450 -400
+use sky130_fd_pr__nfet_01v8_89CNAM  xn
+timestamp 1791693915
+transform 1 0 0 0 1 0
+box -211 -310 211 310
+use sky130_fd_pr__pfet_01v8_X8GLGQ  xp
+timestamp 1791693915
+transform 1 0 0 0 1 830
+box -211 -419 211 419
+<< labels >>
+rlabel metal1 0 360 0 360 0 A
+port 1 nsew signal bidirectional
+rlabel metal1 -377 400 -377 400 0 Y
+port 2 nsew signal bidirectional
+rlabel metal1 0 1380 0 1380 0 VDD
+port 3 nsew power bidirectional
+rlabel metal1 0 -450 0 -450 0 VSS
+port 4 nsew ground bidirectional
+<< end >>

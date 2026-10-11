@@ -1,0 +1,26 @@
+* Inverter smoke testbench — rendered by scripts/sim.py
+.lib @LIB@ @CORNER@
+.include @DIR@/inv.spice
+.temp @TEMP@
+
+VDD  vdd 0 @VDD@
+VIN  a   0 0 PULSE(0 @VDD@ 1n 50p 50p 2n 4n)
+XINV a y vdd 0 inv
+CL   y   0 10f
+
+.control
+dc VIN 0 @VDD@ 0.002
+meas dc vm  when v(y)=v(a)
+meas dc voh find v(y) at=0
+meas dc vol find v(y) at=@VDD@
+echo "RESULT vm   $&vm"
+echo "RESULT voh  $&voh"
+echo "RESULT vol  $&vol"
+tran 2p 6n
+meas tran tphl trig v(a) val=@VDDH@ rise=1 targ v(y) val=@VDDH@ fall=1
+meas tran tplh trig v(a) val=@VDDH@ fall=1 targ v(y) val=@VDDH@ rise=1
+echo "RESULT tphl $&tphl"
+echo "RESULT tplh $&tplh"
+quit
+.endc
+.end
