@@ -19,3 +19,6 @@ build/
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Local Claude Code instructions (kept on this machine, not published)
+CLAUDE.md
