@@ -14,16 +14,19 @@
 *  With Ra:Rb:Rc:R_k = 9:4:3:7 → VREF = 0.1419 VDD (0.255 V), VK = 0.331 VDD (0.596 V).
 * Sizing parameters: mf_w/mf_l set MF in both converters AND the x2 weight copies (they must
 * stay identical for an exact ratio of 2); i0_*, ota_* are passed to vi_conv.
-.subckt neuron_core X Y VDD VSS ru=14.79 pk_w=16 pk_l=2 pr_w=32 pr_l=8 mf_w=8 mf_l=2
+* rscale models a global xhigh_po sheet-resistance shift (PDK corners do not vary it): it
+* scales every resistor in the block, including the bias reference and the Rz nulling resistors.
+.subckt neuron_core X Y VDD VSS rscale=1 pk_w=16 pk_l=2 pr_w=32 pr_l=8 mf_w=8 mf_l=2
 + i0_w=8 i0_l=2 ota_in_w=10 ota_in_l=1 ota_ld_w=2 ota_ld_l=2
-XBIAS VDD VSS VP VN bias_ref r_l=17
+.param ru={14.79*rscale}
+XBIAS VDD VSS VP VN bias_ref r_l={17*rscale}
 XRA VDD  VK   VSS sky130_fd_pr__res_xhigh_po_0p69 L={9*ru}
 XRB VK   VREF VSS sky130_fd_pr__res_xhigh_po_0p69 L={4*ru}
 XRC VREF VSS  VSS sky130_fd_pr__res_xhigh_po_0p69 L={3*ru}
 XVS X    VREF GS VP VDD VSS vi_conv r_l={7*ru}
-+ mf_w={mf_w} mf_l={mf_l} i0_w={i0_w} i0_l={i0_l} ota_in_w={ota_in_w} ota_in_l={ota_in_l} ota_ld_w={ota_ld_w} ota_ld_l={ota_ld_l}
++ rz_l={17*rscale} mf_w={mf_w} mf_l={mf_l} i0_w={i0_w} i0_l={i0_l} ota_in_w={ota_in_w} ota_in_l={ota_in_l} ota_ld_w={ota_ld_w} ota_ld_l={ota_ld_l}
 XVK VK   VREF GK VP VDD VSS vi_conv r_l={7*ru}
-+ mf_w={mf_w} mf_l={mf_l} i0_w={i0_w} i0_l={i0_l} ota_in_w={ota_in_w} ota_in_l={ota_in_l} ota_ld_w={ota_ld_w} ota_ld_l={ota_ld_l}
++ rz_l={17*rscale} mf_w={mf_w} mf_l={mf_l} i0_w={i0_w} i0_l={i0_l} ota_in_w={ota_in_w} ota_in_l={ota_in_l} ota_ld_w={ota_ld_w} ota_ld_l={ota_ld_l}
 * weight mirrors (w = 2: m=2 copies of MF)
 XWS S    GS VSS VSS sky130_fd_pr__nfet_01v8 W={mf_w} L={mf_l} nf=1 m=2
 XWK DK   GK VSS VSS sky130_fd_pr__nfet_01v8 W={mf_w} L={mf_l} nf=1 m=2
