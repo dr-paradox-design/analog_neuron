@@ -27,14 +27,7 @@
 
 ## How it works
 
-```mermaid
-flowchart LR
-    X([x]) --> VIS["V→I<br/>OTA + R_in"] --> WS["weight mirror<br/>×2"] --> SUM(("Σ"))
-    VDD([VDD]) --> DIV["divider<br/>V_k = 0.326·VDD"] --> VIK["V→I<br/>OTA + R_k"] --> WK["weight mirror<br/>×2"] --> FLIP["PMOS flip"] --> SUM
-    SUM --> RELU["ReLU<br/>PMOS diode"] --> ROUT["R_out"] --> Y([y])
-    BIAS["β-multiplier bias<br/>+ start-up"] -.-> VIS
-    BIAS -.-> VIK
-```
+<img src="docs/img/block-diagram.png" alt="Current topology of the neuron: signal and knee paths summed at Σ, then ReLU and R_out" width="100%">
 
 - **Ratiometric gain.** The weight is 2 · R<sub>out</sub>/R<sub>in</sub>: one matched resistor ratio and one
   mirror ratio, so it barely moves with process, temperature or supply.
