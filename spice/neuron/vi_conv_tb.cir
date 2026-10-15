@@ -11,7 +11,7 @@ VREF vref 0 0.25
 VX   x    0 0.75
 XV   x vref g vp vdd 0 vi_conv
 * mirror copy x2 into a 0.6 V node (stands in for the summing node)
-XC   c g 0 0 sky130_fd_pr__nfet_01v8 W=8 L=2 nf=1 m=2
+XC   c g 0 0 sky130_fd_pr__nfet_01v8 W=16 L=4 nf=1 m=2
 VC   c 0 0.6
 
 .control

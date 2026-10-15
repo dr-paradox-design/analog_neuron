@@ -1,4 +1,7 @@
-* V->I converter loop stability (variants D and F) over PVT — rendered by scripts/sim.py
+* V->I converter loop stability over PVT — rendered by scripts/sim.py
+* Two sizings side by side: OLD (original 8/2 sizing) and NEW (MC variant C: MF and its x2
+* copies 16/4, I0 16/4, Cc 0.80 pF, Rz ~72k) — the 4x larger mirror gates load the
+* compensation node G, so Cc/Rz were raised with them.
 * Each variant: open-loop copy (loop broken at the OTA + input), own bias reference.
 .lib @LIB@ @CORNER@
 .include @DIR@/../bias/bias_ref.spice
@@ -9,42 +12,43 @@ VREF vref 0 0.25
 VAC  vac  0 DC 0 AC 1
 VXA  xa   0 0.75
 
-.subckt vi_open XA VREF XN VAC VDD VSS cc_w=10 cc_l=10 rz_l=0.5 i0_w=4
+.subckt vi_open XA VREF XN VAC VDD VSS cc_w=15 cc_l=15 rz_l=17 i0_w=8 i0_l=2 mf_w=8 mf_l=2
++ ota_in_w=10 ota_in_l=1 ota_ld_w=2 ota_ld_l=2
 XB   VDD VSS vp vn bias_ref r_l=17
 XR   XA  XN  VSS sky130_fd_pr__res_xhigh_po_0p69 L=103.5
-XA1  INA VREF G vp VDD VSS ota5p
-XMF  XN  G   VSS VSS sky130_fd_pr__nfet_01v8 W=8 L=2 nf=1 m=1
-XI0  XN  vp  VDD VDD sky130_fd_pr__pfet_01v8 W={i0_w} L=2 nf=1 m=1
+XA1  INA VREF G vp VDD VSS ota5p in_w={ota_in_w} in_l={ota_in_l} ld_w={ota_ld_w} ld_l={ota_ld_l}
+XMF  XN  G   VSS VSS sky130_fd_pr__nfet_01v8 W={mf_w} L={mf_l} nf=1 m=1
+XI0  XN  vp  VDD VDD sky130_fd_pr__pfet_01v8 W={i0_w} L={i0_l} nf=1 m=1
 XRZ  G   GC  VSS sky130_fd_pr__res_xhigh_po_0p69 L={rz_l}
 XCC  GC  XN  sky130_fd_pr__cap_mim_m3_1 W={cc_w} L={cc_l}
-XC   C   G   VSS VSS sky130_fd_pr__nfet_01v8 W=8 L=2 nf=1 m=2
+XC   C   G   VSS VSS sky130_fd_pr__nfet_01v8 W={mf_w} L={mf_l} nf=1 m=2
 VC   C   VSS 0.6
 LBRK XN  INA 1G
 CBRK INA VAC 1
 .ends vi_open
-XD xa vref xnD vac vdd 0 vi_open cc_w=15 cc_l=15 rz_l=17 i0_w=8
-XF xa vref xnF vac vdd 0 vi_open cc_w=15 cc_l=15 rz_l=17 i0_w=4
+XOLD xa vref xnOLD vac vdd 0 vi_open
+XNEW xa vref xnNEW vac vdd 0 vi_open mf_w=16 mf_l=4 i0_w=16 i0_l=4 cc_w=20 cc_l=20 rz_l=25
 
 .control
 foreach xv 0.3 0.75 1.2
   alter VXA dc=$xv
   ac dec 20 10 1g
-  let lgD = mag(v(xnD))
-  let phD = 180/PI*cph(v(xnD))
-  meas ac phdcD find phD at=10
-  meas ac fcD when lgD=1
-  meas ac phcD find phD when lgD=1
-  let pmD = phcD - (phdcD - 180)
-  echo "RESULT pmD_x$xv $&pmD"
-  echo "RESULT fcD_x$xv $&fcD"
-  let lgF = mag(v(xnF))
-  let phF = 180/PI*cph(v(xnF))
-  meas ac phdcF find phF at=10
-  meas ac fcF when lgF=1
-  meas ac phcF find phF when lgF=1
-  let pmF = phcF - (phdcF - 180)
-  echo "RESULT pmF_x$xv $&pmF"
-  echo "RESULT fcF_x$xv $&fcF"
+  let lgOLD = mag(v(xnOLD))
+  let phOLD = 180/PI*cph(v(xnOLD))
+  meas ac phdcOLD find phOLD at=10
+  meas ac fcOLD when lgOLD=1
+  meas ac phcOLD find phOLD when lgOLD=1
+  let pmOLD = phcOLD - (phdcOLD - 180)
+  echo "RESULT pmOLD_x$xv $&pmOLD"
+  echo "RESULT fcOLD_x$xv $&fcOLD"
+  let lgNEW = mag(v(xnNEW))
+  let phNEW = 180/PI*cph(v(xnNEW))
+  meas ac phdcNEW find phNEW at=10
+  meas ac fcNEW when lgNEW=1
+  meas ac phcNEW find phNEW when lgNEW=1
+  let pmNEW = phcNEW - (phdcNEW - 180)
+  echo "RESULT pmNEW_x$xv $&pmNEW"
+  echo "RESULT fcNEW_x$xv $&fcNEW"
 end
 quit
 .endc

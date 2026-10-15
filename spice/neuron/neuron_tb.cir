@@ -67,8 +67,13 @@ meas tran y_lo  find v(y) when v(x)=0.3
 meas tran y_mid find v(y) when v(x)=0.9
 meas tran y_hi  find v(y) when v(x)=1.2
 meas tran t_hi  when v(x)=1.2
-* linear region: endpoint line from x = vk + 0.1 to 1.2
-let xa = vk + 0.1
+* linear region: endpoint line from x = knee + 0.1 V to 1.2 V, where the knee is first
+* estimated from y(0.9) and y(1.2) (both far above any knee), so a run whose knee moved by
+* mismatch is not measured inside its own ReLU rounding. Within 0.1 V of the knee the
+* curvature belongs to the activation f, not to the MAC.
+let slope0 = (y_hi - y_mid) / 0.3
+let knee0  = 0.9 - y_mid / slope0
+let xa = knee0 + 0.1
 meas tran t_a when v(x)=$&xa
 meas tran ya  find v(y) at=$&t_a
 let slope = (y_hi - ya) / (1.2 - xa)
@@ -91,6 +96,7 @@ echo "RESULT y_mid $&y_mid"
 echo "RESULT y_hi $&y_hi"
 echo "RESULT slope $&slope"
 echo "RESULT knee $&knee"
+echo "RESULT knee0 $&knee0"
 echo "RESULT inl_max_pct $&inl_max"
 echo "RESULT inl_min_pct $&inl_min"
 echo "RESULT err_max_pct $&err_max"

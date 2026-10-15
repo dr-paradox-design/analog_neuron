@@ -5,11 +5,11 @@
 *                   ├── I0: PMOS copy of the bias (≈ I_ref/4) keeps MF out of deep
 *                   │   subthreshold so the loop gain/bandwidth do not collapse at small x;
 *                   │   the knee replica carries the same I0, so it cancels at the summing node
-*                   └── Cc + Rz to G (Miller compensation around MF; Rz cancels the
+*                   └── Cc (0.80 pF) + Rz (~72k) to G (Miller compensation around MF; Rz cancels the
 *                       right-half-plane zero and adds phase at small MF current)
 *
 * Ports: IN VREF G VP VDD VSS
-.subckt vi_conv IN VREF G VP VDD VSS r_l=103.5 mf_w=8 mf_l=2 cc_w=15 cc_l=15 rz_l=17 i0_w=8 i0_l=2
+.subckt vi_conv IN VREF G VP VDD VSS r_l=103.5 mf_w=16 mf_l=4 cc_w=20 cc_l=20 rz_l=25 i0_w=16 i0_l=4
 + ota_in_w=10 ota_in_l=1 ota_ld_w=2 ota_ld_l=2
 XR  IN  X   VSS sky130_fd_pr__res_xhigh_po_0p69 L={r_l}
 XA  X   VREF G VP VDD VSS ota5p in_w={ota_in_w} in_l={ota_in_l} ld_w={ota_ld_w} ld_l={ota_ld_l}
