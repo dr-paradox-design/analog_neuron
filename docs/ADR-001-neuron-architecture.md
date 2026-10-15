@@ -169,13 +169,13 @@ that moves with PVT (to be measured; fixed by switching to an R-tracking referen
 
 **Phase 1: Block design (10-11 → 10-15)**
 5. [x] gm/Id characterisation of nfet_01v8 / pfet_01v8 (`spice/char/devchar_tb.cir`)
-6. [ ] Bias reference + start-up → V→I → weight mirror → Σ/ReLU → I→V, each with its own testbench
+6. [x] Bias reference + start-up → V→I → weight mirror → Σ/ReLU → I→V, each with its own testbench
 
 **Phase 2: Full-neuron verification (10-15 → 10-17)**
-7. [ ] 45-point PVT sweep: linearity, bias, power, OTA phase margin, start-up (fast/slow VDD ramp)
-8. [ ] Monte Carlo ≥ 200 runs: weight σ, offset
-9. [ ] Floorplan and area check against 180 × 115 µm
-10. [ ] 🚦 **Gate A**: schematic sign-off; output-load fallback chosen if no reply
+7. [x] 45-point PVT sweep: linearity, bias, power, OTA phase margin, start-up (fast/slow VDD ramp)
+8. [x] Monte Carlo ≥ 200 runs: weight σ, offset
+9. [x] Area check against 180 × 115 µm (device-level estimate; floorplan drawn at the start of layout)
+10. [x] 🚦 **Gate A**: schematic sign-off (2026-10-15, `docs/gate-A.md`); no buffer, raw output
 
 **Phase 3: Layout (10-17 → 10-23)**
 11. [ ] Magic Tcl-scripted layout, bias block first end-to-end to calibrate pace
@@ -224,6 +224,15 @@ These were measured in simulation and change assumptions above.
 Consequence of the VDD-divider choice: thresholds scale with the supply (±10 % VDD → ±10 % in
 V_ref and b), but do not drift with temperature or process. V_ref ≈ 0.14·VDD stays at
 0.227–0.277 V, always below the 0.3 V input floor.
+
+### Gate A decisions (2026-10-15)
+
+| Question | Decision |
+|---|---|
+| Output stage (Silicluster has not replied on the output load) | **No buffer.** y is the raw ≈ 287 kΩ node, to be measured with a high-impedance instrument (≥ 10 MΩ → ≈ 2.8 % gain loss, linearity unaffected). Revisit only if Silicluster specifies a heavier load. |
+| Core power reduction | **Not now.** Keep the verified core: 78 µW worst case at nominal R, 98 µW at the pessimistic R −20 % corner (xhigh_po e-test specs are still TBD at SkyWater). |
+| Weight-mirror sizing | 4× area (16/4), flip 32/4, I0 16/4 — slope σ 1.47 % in a 200-run MC. |
+| Compensation | Cc 0.80 pF, Rz ≈ 72 kΩ — phase margin ≥ 71.7° over PVT. |
 
 ## Open questions for the owner (resolved — kept for history)
 
