@@ -25,7 +25,7 @@ Slope over PVT 1.903 – 1.995; knee independent of temperature and process.
 ## Decisions taken at this gate
 
 - **Output: raw node, no buffer.** Silicluster has not specified the output load. y has
-  ≈ 287 kΩ output impedance and must be measured with ≥ 10 MΩ (≈ 2.8 % gain loss; linearity is
+  ≈ 300 kΩ output impedance and must be measured with ≥ 10 MΩ (≈ 2.8 % gain loss; linearity is
   unaffected). If Silicluster later specifies a heavier load, a buffer needs a core power cut first.
 - **Core power kept as verified.** The 98.1 µW case combines the hottest, highest-supply corner
   with an assumed −20 % xhigh_po sheet resistance; SkyWater lists xhigh_po e-test specs as TBD.

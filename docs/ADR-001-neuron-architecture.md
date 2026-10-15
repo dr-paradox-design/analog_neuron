@@ -178,15 +178,15 @@ that moves with PVT (to be measured; fixed by switching to an R-tracking referen
 10. [x] 🚦 **Gate A**: schematic sign-off (2026-10-15, `docs/gate-A.md`); no buffer, raw output
 
 **Phase 3: Layout (10-17 → 10-23)**
-11. [ ] Magic Tcl-scripted layout, bias block first end-to-end to calibrate pace
-12. [ ] Common-centroid mirrors with dummies, interdigitated R_in/R_out, guard rings, M4/M5 grid
+11. [x] Scripted layout (Python .mag writer over Magic-generated devices), OTA then bias block first
+12. [x] Interleaved mirrors and resistor array (dummy ends), guard ring per device, M4/M5 grid
 
 **Phase 4: Physical verification (10-23 → 10-25)**
-13. [ ] DRC (Magic), LVS (netgen + sky130A_setup.tcl), PEX, post-layout corner sims
-14. [ ] 🚦 **Gate B**: DRC/LVS clean with logs in `verif/`
+13. [x] DRC (Magic), LVS (netgen + sky130A_setup.tcl), PEX, post-layout corner sims
+14. [x] 🚦 **Gate B**: DRC/LVS clean with logs in `verif/` (2026-10-15, `docs/gate-B.md`)
 
 **Phase 5: Package (10-25 → 10-28)**
-15. [ ] GDS export, bounding-box and pin checks, `docs/` writeup, `submit/` package, submit 2026-10-28
+15. [x] GDS export, bounding-box and pin checks, `docs/` writeup, `submit/` package (submission itself: owner)
 
 ## Findings from implementation (2026-10-11)
 
@@ -229,7 +229,7 @@ V_ref and b), but do not drift with temperature or process. V_ref ≈ 0.14·VDD 
 
 | Question | Decision |
 |---|---|
-| Output stage (Silicluster has not replied on the output load) | **No buffer.** y is the raw ≈ 287 kΩ node, to be measured with a high-impedance instrument (≥ 10 MΩ → ≈ 2.8 % gain loss, linearity unaffected). Revisit only if Silicluster specifies a heavier load. |
+| Output stage (Silicluster has not replied on the output load) | **No buffer.** y is the raw ≈ 300 kΩ node, to be measured with a high-impedance instrument (≥ 10 MΩ → ≈ 2.8 % gain loss, linearity unaffected). Revisit only if Silicluster specifies a heavier load. |
 | Core power reduction | **Not now.** Keep the verified core: 78 µW worst case at nominal R, 98 µW at the pessimistic R −20 % corner (xhigh_po e-test specs are still TBD at SkyWater). |
 | Weight-mirror sizing | 4× area (16/4), flip 32/4, I0 16/4 — slope σ 1.47 % in a 200-run MC. |
 | Compensation | Cc 0.80 pF, Rz ≈ 72 kΩ — phase margin ≥ 71.7° over PVT. |

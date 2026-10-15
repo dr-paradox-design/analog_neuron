@@ -1,0 +1,51 @@
+# Gate B — layout sign-off (2026-10-15)
+
+**Result: PASS.** The layout is DRC clean, LVS clean, and post-layout simulation (devices +
+extracted parasitic capacitance) meets every target over all 45 PVT points.
+
+Top cell `analog_neuron`, `gds/analog_neuron.gds`: 180.000 × 115.000 µm (read back with KLayout).
+
+## Physical verification
+
+| Cell | DRC (Magic `drc(full)`) | LVS (netgen + `sky130A_setup.tcl`) |
+|---|---|---|
+| `ota5p` | No errors found, DRC_COUNT 0 | PASS — match uniquely, no property errors |
+| `bias_ref` | No errors found, DRC_COUNT 0 | PASS — 9 devices, 7 nets |
+| `neuron_core` | No errors found, DRC_COUNT 0 | PASS — 23 devices, 16 nets |
+| `analog_neuron` (top, with power grid) | No errors found, DRC_COUNT 0 | PASS — core keeps exactly its 4 ports |
+
+Logs: `verif/drc/*_drc.log`, `verif/lvs/*.log`, `verif/lvs/*_comp.out`.
+LVS references: `spice/lvs/*_ref.spice`, generated from the simulation netlists by
+`scripts/lvs_ref.py` (numeric values; netgen cannot evaluate parameter expressions).
+
+Checks on the checks:
+- **DRC:** a copy of the core with injected metal2/metal3 errors reported all of them.
+- **LVS:** a reference with a deliberately wrong input-pair width was reported as a property
+  error. netgen still prints "Circuits match uniquely" in that case, so `scripts/lvs.sh`
+  issues PASS only when there are also no property errors.
+
+## Post-layout simulation (`build/pex/neuron_core_pex.spice`: 81 devices, 506 parasitic C)
+
+| Check | Schematic | Post-layout | Spec |
+|---|---|---|---|
+| Slope (w) over 45 PVT | 1.903 – 1.995 | 1.904 – 1.995 | w = 2 |
+| Knee over 45 PVT | 0.526 – 0.645 V | 0.525 – 0.644 V | 0.326·VDD |
+| MAC linearity (INL) | ≤ 0.71 % | ≤ 0.70 % | ≤ 5 % ✅ |
+| Peak power | 37.8 – 78.3 µW | 37.6 – 78.0 µW | < 100 µW ✅ |
+| Signal-loop phase margin, 45 PVT × 3 inputs | ≥ 71.7° (converter alone) | **≥ 62.5°** | ≥ 60° ✅ |
+| Knee-loop phase margin, 45 PVT × 3 inputs | — | **≥ 85.8°** | ≥ 60° ✅ |
+
+Evidence: `verif/sim/post-layout/neuron_pex_pvt.txt`, `verif/sim/post-layout/neuron_pex_stability_pvt.txt`.
+
+Loop stability is measured by Middlebrook double injection at each OTA output
+(`spice/neuron/neuron_pex_mb_tb.cir`). This cuts every feedback path, including the knee loop's
+second path through the shared divider (MF_k loads VK, VK sets VREF, VREF is the OTA's other
+input). A cut at a single OTA input cannot capture that path: there it reads a meaningless 0°
+phase. The Gate A stability test drove the converter from ideal sources and missed this path too;
+the post-layout result above covers it.
+
+## Not run
+
+- Antenna rule check (Magic `antennacheck`). Risk is low: every gate-connected net also reaches a
+  drain or source by metal3, and the long metal4/metal5 power nets connect to source diffusions.
+- xschem schematics (owner will review separately); the SPICE netlists are the design source.

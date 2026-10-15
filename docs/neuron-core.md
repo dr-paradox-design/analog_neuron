@@ -90,7 +90,7 @@ XPR1 when y is high, most at low VDD and cold.
 | I0 sources | 3.5 µA | 7 % |
 | Total | 48.9 µA (≈ 97 µW) | |
 
-### Output loading (raw output, no buffer; output impedance ≈ R_out ≈ 287 kΩ)
+### Output loading (raw output, no buffer; output impedance ≈ R_out ≈ 300 kΩ)
 
 | Load on y | Slope | Gain change | INL |
 |---|---|---|---|
@@ -124,6 +124,6 @@ gaps in the M4 power grid.
 ## Open
 
 - **Output stage** — depends on the output-load spec (pending Silicluster). The raw output is a
-  287 kΩ source; it needs ≥ 10 MΩ loads for < 3 % gain error.
+  ≈ 300 kΩ source; it needs ≥ 10 MΩ loads for < 3 % gain error.
 - **Power margin** — at R −20 %, 125 °C, 1.98 V the core alone takes 98 µW. Any buffer needs the
   core power reduced first (knee flip carries I0 twice; bias branches can run at lower current).
