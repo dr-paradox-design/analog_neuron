@@ -1,0 +1,56 @@
+* POST-LAYOUT loop stability of both V->I converters — rendered by scripts/sim.py
+* DUT: build/pex/neuron_core_pex_brk.spice (scripts/make_pex_brk.py): the extracted netlist with each
+* OTA + input gate cut and an AC injection port per loop (NACS signal, NACK knee).
+* Same phase-margin definition as vi_stab_tb.cir. RESULT sane_x* = 1 if the operating point is physical.
+.lib @LIB@ @CORNER@
+.include @DIR@/../../build/pex/neuron_core_pex_brk.spice
+.temp @TEMP@
+VDD  vdd  0 @VDD@
+VX   x    0 0.75
+VACS nacs 0 DC 0 AC 1
+VACK nack 0 DC 0 AC 0
+XN   x y vdd 0 nacs nack neuron_core
+DESDN 0 y   desd
+DESDP y vdd desd
+.model desd D(is=1e-15 n=1)
+* force source stepping for every operating point (all sources ramp up from 0, like a
+* power-up): plain Newton can land on the xhigh_po model's spurious kV solutions
+.option noopiter gminsteps=0
+.nodeset v(xn.vk)={0.331*@VDD@} v(xn.vref)={0.142*@VDD@} v(xn.xs)={0.142*@VDD@} v(xn.xk)={0.142*@VDD@}
++ v(xn.gs)=0.4 v(xn.gk)=0.45 v(xn.dk)={@VDD@-1.1} v(xn.s)={@VDD@-0.4} v(y)=0 v(xn.vp)={@VDD@-1.1}
+.control
+foreach xv 0.3 0.75 1.2
+  alter VX dc=$xv
+  op
+  let sane = (abs(v(xn.vk)) < 1.8) * (abs(v(xn.vref)) < 1.8) * (abs(v(xn.s)) < 2.5) * (abs(v(xn.gcs)) < 2.5) * (abs(v(xn.gck)) < 2.5)
+  echo "RESULT sane_x$xv $&sane"
+  alter @VACS[acmag] = 1
+  alter @VACK[acmag] = 0
+  ac dec 20 10 1g
+  let lg = mag(v(xn.xs))
+  let ph = 180/PI*cph(v(xn.xs))
+  meas ac phdc find ph at=10
+  meas ac fc when lg=1
+  meas ac phc find ph when lg=1
+  let pm = phc - (phdc - 180)
+  echo "RESULT phdcS_x$xv $&phdc"
+  echo "RESULT phcS_x$xv $&phc"
+  echo "RESULT pmS_x$xv $&pm"
+  echo "RESULT fcS_x$xv $&fc"
+  alter @VACS[acmag] = 0
+  alter @VACK[acmag] = 1
+  ac dec 20 10 1g
+  let lg = mag(v(xn.xk))
+  let ph = 180/PI*cph(v(xn.xk))
+  meas ac phdc find ph at=10
+  meas ac fc when lg=1
+  meas ac phc find ph when lg=1
+  let pm = phc - (phdc - 180)
+  echo "RESULT phdcK_x$xv $&phdc"
+  echo "RESULT phcK_x$xv $&phc"
+  echo "RESULT pmK_x$xv $&pm"
+  echo "RESULT fcK_x$xv $&fc"
+end
+quit
+.endc
+.end

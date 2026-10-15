@@ -1,0 +1,89 @@
+* POST-LAYOUT loop stability by Middlebrook double injection — rendered by scripts/sim.py
+* DUT: build/pex/neuron_core_pex_mb.spice (scripts/make_pex_mb.py): each loop cut at its OTA output.
+* At the cut (a = OTA side GSA/GKA, b = load side GS/GK):
+*   run 1, series voltage VT (b - a = 1):   Tv = -v(a)/v(b)
+*   run 2, shunt current IT into b:          Ti = i(VT) / (1 - i(VT))   (i(VT) flows b -> a inside VT)
+*   T = (Tv*Ti - 1) / (Tv + Ti + 2),  PM = 180 + phase(T at |T| = 1) - phase(T at 10 Hz)
+* This opens every feedback path through the OTA, including the knee loop's path through the
+* shared divider (VREF), which a cut at one OTA input cannot capture.
+.lib @LIB@ @CORNER@
+.include @DIR@/../../build/pex/neuron_core_pex_mb.spice
+.temp @TEMP@
+VDD vdd 0 @VDD@
+VX  x   0 0.75
+VTS gs  gsa DC 0 AC 1
+ITS 0   gs  DC 0 AC 1
+VTK gk  gka DC 0 AC 1
+ITK 0   gk  DC 0 AC 1
+XN  x y vdd 0 gsa gs gka gk neuron_core
+DESDN 0 y   desd
+DESDP y vdd desd
+.model desd D(is=1e-15 n=1)
+* source stepping for every operating point (see neuron_pex_stab_tb.cir)
+.option noopiter gminsteps=0
+.nodeset v(xn.vk)={0.331*@VDD@} v(xn.vref)={0.142*@VDD@} v(xn.xs)={0.142*@VDD@} v(xn.xk)={0.142*@VDD@}
++ v(gs)=0.4 v(gk)=0.45 v(xn.dk)={@VDD@-1.1} v(xn.s)={@VDD@-0.4} v(y)=0 v(xn.vp)={@VDD@-1.1}
+.control
+foreach xv 0.3 0.75 1.2
+  alter VX dc=$xv
+  op
+  let sane = (abs(v(xn.vk)) < 1.8) * (abs(v(xn.vref)) < 1.8) * (abs(v(xn.s)) < 2.5) * (abs(v(xn.gcs)) < 2.5) * (abs(v(xn.gck)) < 2.5)
+  echo "RESULT sane_x$xv $&sane"
+  * ---- loop S
+  alter @VTS[acmag] = 1
+  alter @ITS[acmag] = 0
+  alter @VTK[acmag] = 0
+  alter @ITK[acmag] = 0
+  ac dec 20 10 1g
+  let tv = -v(gsa)/v(gs)
+  set p1 = $curplot
+  alter @VTS[acmag] = 0
+  alter @ITS[acmag] = 1
+  alter @VTK[acmag] = 0
+  alter @ITK[acmag] = 0
+  ac dec 20 10 1g
+  let ti = i(vts)/(1 - i(vts))
+  let tvp = {$p1}.tv
+  let tt = (tvp*ti - 1)/(tvp + ti + 2)
+  let lg = mag(tt)
+  let ph = 180/PI*cph(tt)
+  meas ac lg10 find lg at=10
+  meas ac phdc find ph at=10
+  meas ac fc when lg=1
+  meas ac phc find ph when lg=1
+  let pm = 180 + phc - phdc
+  let lgdb = 20*log10(lg10)
+  echo "RESULT pmS_x$xv $&pm"
+  echo "RESULT fcS_x$xv $&fc"
+  echo "RESULT dcgainS_x$xv $&lgdb"
+  * ---- loop K
+  alter @VTS[acmag] = 0
+  alter @ITS[acmag] = 0
+  alter @VTK[acmag] = 1
+  alter @ITK[acmag] = 0
+  ac dec 20 10 1g
+  let tv = -v(gka)/v(gk)
+  set p1 = $curplot
+  alter @VTS[acmag] = 0
+  alter @ITS[acmag] = 0
+  alter @VTK[acmag] = 0
+  alter @ITK[acmag] = 1
+  ac dec 20 10 1g
+  let ti = i(vtk)/(1 - i(vtk))
+  let tvp = {$p1}.tv
+  let tt = (tvp*ti - 1)/(tvp + ti + 2)
+  let lg = mag(tt)
+  let ph = 180/PI*cph(tt)
+  meas ac lg10 find lg at=10
+  meas ac phdc find ph at=10
+  meas ac fc when lg=1
+  meas ac phc find ph when lg=1
+  let pm = 180 + phc - phdc
+  let lgdb = 20*log10(lg10)
+  echo "RESULT pmK_x$xv $&pm"
+  echo "RESULT fcK_x$xv $&fc"
+  echo "RESULT dcgainK_x$xv $&lgdb"
+end
+quit
+.endc
+.end

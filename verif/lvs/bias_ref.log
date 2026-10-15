@@ -8,7 +8,7 @@ Call to undefined subcircuit sky130_fd_pr__nfet_01v8
 Creating placeholder cell definition.
 Call to undefined subcircuit sky130_fd_pr__pfet_01v8
 Creating placeholder cell definition.
-Reading netlist file /home/dr-paradox/Documents/analog_neuron/spice/bias/bias_ref.spice for /home/dr-paradox/Documents/analog_neuron/spice/bias/bias_ref.spice bias_ref
+Reading netlist file /home/dr-paradox/Documents/analog_neuron/spice/lvs/bias_ref_ref.spice for /home/dr-paradox/Documents/analog_neuron/spice/lvs/bias_ref_ref.spice bias_ref
 Call to undefined subcircuit sky130_fd_pr__nfet_01v8
 Creating placeholder cell definition.
 Call to undefined subcircuit sky130_fd_pr__res_xhigh_po_1p41

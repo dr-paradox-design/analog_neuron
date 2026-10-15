@@ -206,6 +206,10 @@ class Router:
             if x2 - x1 < VIA2_PAD_M3:
                 x1, x2 = (x1 + x2) / 2 - VIA2_PAD_M3 / 2, (x1 + x2) / 2 + VIA2_PAD_M3 / 2
             c.hwire("metal3", x1, x2, y, TRACK_W)
+            # name the net (non-port label) so extraction keeps readable node names
+            if (chan, net) not in {(p[0], p[1]) for p in self.ports}:
+                xm = snap((x1 + x2) / 2)
+                c.label(net, "metal3", Rect(xm - 0.1, y - 0.1, xm + 0.1, y + 0.1), None)
         for chan, net, x, index, use in self.ports:
             y = self.channels[chan].y(net)
             c.label(net, "metal3", Rect(x - 0.1, y - 0.1, x + 0.1, y + 0.1), index, use)

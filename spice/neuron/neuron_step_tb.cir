@@ -1,0 +1,36 @@
+* Neuron loop step response (stability check that also works on the extracted layout).
+* x is held at 0.9 V, then steps +20 mV in 1 ns at 100 us. Overshoot of the signal-converter
+* OTA output GS: second-order guide 0 % at PM >= 75 deg, ~5 % at 65, ~10 % at 60, ~23 % at 45.
+* neuron_pex_step_tb.cir is generated from this file (scripts/make_pex_tb.py).
+.lib @LIB@ @CORNER@
+.include @DIR@/../bias/bias_ref.spice
+.include @DIR@/ota5p.spice
+.include @DIR@/vi_conv.spice
+.include @DIR@/neuron_core.spice
+.temp @TEMP@
+VDD vdd 0 PWL(0 0 20u @VDD@)
+VX  x   0 PWL(0 0.9 100u 0.9 100.001u 0.92)
+XN  x y vdd 0 neuron_core
+DESDN 0 y   desd
+DESDP y vdd desd
+.model desd D(is=1e-15 n=1)
+.control
+tran 1n 110u 0 1n uic
+meas tran g0   avg v(xn.gs) from=95u  to=100u
+meas tran g1   avg v(xn.gs) from=108u to=110u
+meas tran gmax max v(xn.gs) from=100u to=108u
+meas tran gmin min v(xn.gs) from=100u to=108u
+meas tran y0   avg v(y) from=95u  to=100u
+meas tran y1   avg v(y) from=108u to=110u
+let dg = g1 - g0
+let os_up = 100 * (gmax - g1) / abs(dg)
+let os_dn = 100 * (g1 - gmin) / abs(dg)
+let os = (dg > 0) * os_up + (dg <= 0) * os_dn
+let dy = y1 - y0
+let dgmv = 1000 * dg
+echo "RESULT gs_step_mv $&dgmv"
+echo "RESULT gs_overshoot_pct $&os"
+echo "RESULT y_step $&dy"
+quit
+.endc
+.end

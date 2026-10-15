@@ -361,7 +361,8 @@ class Cell:
             L.append("<< labels >>")
             for text, layer, r, port, use in self.labels:
                 L.append(f"flabel {layer} {u(r.x1)} {u(r.y1)} {u(r.x2)} {u(r.y2)} 0 FreeSans 400 0 0 0 {text}")
-                L.append(f"port {port} nsew {use} bidirectional")
+                if port is not None:                 # None: net-name label only
+                    L.append(f"port {port} nsew {use} bidirectional")
         L.append("<< end >>")
         (magdir / f"{self.name}.mag").write_text("\n".join(L) + "\n")
         return magdir / f"{self.name}.mag"

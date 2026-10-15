@@ -1,0 +1,105 @@
+* Neuron core transfer, linearity and power — rendered by scripts/sim.py
+* POST-LAYOUT version generated from spice/neuron/neuron_tb.cir by scripts/make_pex_tb.py; edit the source, not this file.
+* x ramps 0.29 -> 1.21 V over 2 ms (quasi-static for a MHz-bandwidth circuit; a DC sweep of x
+* needs repeated gmin rescues on this circuit).
+*
+* Numerical robustness: the PDK xhigh_po model has NEGATIVE voltage coefficients
+* (R·(1 - 1e-3|V| - 1e-4 V²/L²)), so its resistance crosses zero near |V| ≈ 1 kV. Newton
+* excursions can lock onto spurious kV equilibria; with mismatch on, ~3 % of seeds did, with
+* either start method. At real voltages (≤ 1.8 V) the coefficient effect is only -0.18 %.
+*   1st try: power-up (uic, VDD ramps 0 -> VDD in 20 us)
+*   if any key node leaves [-(VDD+0.6), VDD+0.6] (incl. the Rz-Cc nodes, held only by an
+*   xhigh_po resistor at DC) or the supply current goes negative: same seed again from a
+*   .nodeset-guided operating point at full VDD
+*   RESULT sane = 1 only if the accepted run is physical; RESULT method = 1 or 2.
+* Stand-in pad ESD diodes on y (reverse leakage ~fA) keep the near-floating output physical.
+* y is unloaded (output buffer / load TBD pending Silicluster).
+.option seed=@SEED@
+.lib @LIB@ @CORNER@
+.include @DIR@/../../build/pex/neuron_core_pex.spice
+.temp @TEMP@
+VDD vdd 0 PWL(0 0 20u @VDD@ 2.1m @VDD@)
+VX  x   0 PWL(0 0.29 50u 0.29 2.05m 1.21)
+XN  x y vdd 0 neuron_core
+DESDN 0 y   desd
+DESDP y vdd desd
+.model desd D(is=1e-15 n=1)
+.nodeset v(xn.vk)={0.331*@VDD@} v(xn.vref)={0.142*@VDD@} v(xn.xs)={0.142*@VDD@} v(xn.xk)={0.142*@VDD@}
++ v(xn.gs)=0.4 v(xn.gk)=0.45 v(xn.dk)={@VDD@-1.1} v(xn.s)={@VDD@-0.4} v(y)=0
++ v(xn.vp)={@VDD@-1.1}
+
+.control
+tran 1u 2.05m 0 2u uic
+let lim = @VDD@ + 0.6
+let bad = (vecmax(abs(v(xn.vk))) > lim) + (vecmax(abs(v(xn.vref))) > lim) + (vecmax(abs(v(xn.s))) > lim)
+let bad = bad + (vecmax(abs(v(y))) > lim) + (vecmax(abs(v(xn.dk))) > lim) + (vecmax(abs(v(xn.gs))) > lim)
+let bad = bad + (vecmax(abs(v(xn.gk))) > lim) + (vecmax(abs(v(xn.xs))) > lim) + (vecmax(abs(v(xn.xk))) > lim)
+let bad = bad + (vecmax(abs(v(xn.gcs))) > lim) + (vecmax(abs(v(xn.gck))) > lim)
+let bad = bad + (vecmax(abs(v(xn.vp))) > lim)
+let ivdd = -i(VDD)
+meas tran imin min ivdd from=30u
+let bad = bad + (imin < 0)
+let method = 1
+if bad > 0
+  echo "NOTE: non-physical solution from the power-up start; retrying from a nodeset operating point"
+  alter @VDD[pwl] = [ 0 @VDD@ 2.1m @VDD@ ]
+  tran 1u 2.05m 0 2u
+  let lim = @VDD@ + 0.6
+  let bad = (vecmax(abs(v(xn.vk))) > lim) + (vecmax(abs(v(xn.vref))) > lim) + (vecmax(abs(v(xn.s))) > lim)
+  let bad = bad + (vecmax(abs(v(y))) > lim) + (vecmax(abs(v(xn.dk))) > lim) + (vecmax(abs(v(xn.gs))) > lim)
+  let bad = bad + (vecmax(abs(v(xn.gk))) > lim) + (vecmax(abs(v(xn.xs))) > lim) + (vecmax(abs(v(xn.xk))) > lim)
+  let bad = bad + (vecmax(abs(v(xn.gcs))) > lim) + (vecmax(abs(v(xn.gck))) > lim)
+  let bad = bad + (vecmax(abs(v(xn.vp))) > lim)
+  let ivdd = -i(VDD)
+  meas tran imin min ivdd from=30u
+  let bad = bad + (imin < 0)
+  let method = 2
+end
+let sane = bad < 0.5
+echo "RESULT sane $&sane"
+echo "RESULT method $&method"
+let ivdd = -i(VDD)
+meas tran vk    find v(xn.vk)   at=1.05m
+meas tran vref  find v(xn.vref) at=1.05m
+meas tran y_lo  find v(y) when v(x)=0.3
+meas tran y_mid find v(y) when v(x)=0.9
+meas tran y_hi  find v(y) when v(x)=1.2
+meas tran t_hi  when v(x)=1.2
+* linear region: endpoint line from x = knee + 0.1 V to 1.2 V, where the knee is first
+* estimated from y(0.9) and y(1.2) (both far above any knee), so a run whose knee moved by
+* mismatch is not measured inside its own ReLU rounding. Within 0.1 V of the knee the
+* curvature belongs to the activation f, not to the MAC.
+let slope0 = (y_hi - y_mid) / 0.3
+let knee0  = 0.9 - y_mid / slope0
+let xa = knee0 + 0.1
+meas tran t_a when v(x)=$&xa
+meas tran ya  find v(y) at=$&t_a
+let slope = (y_hi - ya) / (1.2 - xa)
+let knee  = xa - ya / slope
+let line  = ya + (v(x) - xa) * slope
+let inl   = 100 * (v(y) - line) / y_hi
+meas tran inl_max max inl from=$&t_a to=$&t_hi
+meas tran inl_min min inl from=$&t_a to=$&t_hi
+* error vs the ideal transfer from the actual divider: y = 2 (x - vk)
+let yerr = 100 * (v(y) - 2 * (v(x) - vk)) / y_hi
+meas tran err_max max yerr from=$&t_a to=$&t_hi
+meas tran err_min min yerr from=$&t_a to=$&t_hi
+meas tran i_max max ivdd from=60u
+meas tran i_avg avg ivdd from=60u
+let pmax = i_max * @VDD@
+echo "RESULT vk $&vk"
+echo "RESULT vref $&vref"
+echo "RESULT y_lo $&y_lo"
+echo "RESULT y_mid $&y_mid"
+echo "RESULT y_hi $&y_hi"
+echo "RESULT slope $&slope"
+echo "RESULT knee $&knee"
+echo "RESULT knee0 $&knee0"
+echo "RESULT inl_max_pct $&inl_max"
+echo "RESULT inl_min_pct $&inl_min"
+echo "RESULT err_max_pct $&err_max"
+echo "RESULT err_min_pct $&err_min"
+echo "RESULT pwr_max $&pmax"
+quit
+.endc
+.end
