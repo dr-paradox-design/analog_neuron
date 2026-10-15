@@ -1,0 +1,47 @@
+
+Magic 8.3 revision 683 - Compiled on Thu Sep 17 10:36:37 PM IST 2026.
+Starting magic under Tcl interpreter
+Using the terminal as the console.
+WARNING: RLIMIT_NOFILE is above 1024 and Tcl_Version<9 this may cause runtime issues [rlim_cur=1048576]
+Using NULL graphics device.
+Processing system .magicrc file
+Switching to WIRING tool.
+Switching to NETLIST tool.
+Switching to PICK tool.
+Switching to BOX tool.
+Sourcing design .magicrc for technology sky130A ...
+2 Magic internal units = 1 Lambda
+Input style sky130(): scaleFactor=2, multiplier=2
+The following types are not handled by extraction and will be treated as non-electrical types:
+    ubm 
+Scaled tech values by 2 / 1 to match internal grid scaling
+Loading sky130A Device Generator Menu ...
+Loading "/home/dr-paradox/Documents/analog_neuron/scripts/drc.tcl" from command line.
+"neuron_core" has a zero timestamp; it should be written out
+    to establish a correct timestamp.
+Processing timestamp mismatches.
+Cell pfet_botc0_guard1_l8_nf1_topc1_viagl100_w16 read from current working directory
+Cell pfet_botc0_guard1_l4_nf1_topc1_viagl100_w16 read from current working directory
+Cell mim_l20_w20 read from current working directory
+Cell rxh069_dummy1_guard1_l14p79_nx37_viagl100 read from current working directory
+Cell rxh069_guard1_l12p5_nx4_viagl100 read from current working directory
+Cell nfet_botc0_guard1_l4_nf1_topc1_viagl100_w16 read from current working directory
+Cell bias_ref read from current working directory
+"bias_ref" has a zero timestamp; it should be written out
+    to establish a correct timestamp.
+Cell pfet_botc0_guard1_l40_nf1_topc1_viagl100_w0p42 read from current working directory
+Cell pfet_botc0_guard1_l2_nf1_topc1_viagl100_w16 read from current working directory
+Cell rxh141_guard1_l17_viagl100 read from current working directory
+Cell nfet_botc0_guard1_l1_nf1_topc1_viagl100_w1 read from current working directory
+Cell nfet_botc0_guard1_l0p5_nf1_topc1_viagr100_w16 read from current working directory
+Cell nfet_botc0_guard1_l2_nf1_topc1_viagl100_w20 read from current working directory
+Cell ota5p read from current working directory
+"ota5p" has a zero timestamp; it should be written out
+    to establish a correct timestamp.
+Cell nfet_botc0_guard1_l2_nf1_topc1_viagl100_w2 read from current working directory
+Cell pfet_botc0_guard1_l1_nf1_topc1_viagl100_w10 read from current working directory
+Timestamp mismatches found in these cells: pfet_botc0_guard1_l1_nf1_topc1_viagl100_w10, nfet_botc0_guard1_l2_nf1_topc1_viagl100_w2, ota5p, nfet_botc0_guard1_l2_nf1_topc1_viagl100_w20, nfet_botc0_guard1_l0p5_nf1_topc1_viagr100_w16, nfet_botc0_guard1_l1_nf1_topc1_viagl100_w1, rxh141_guard1_l17_viagl100, pfet_botc0_guard1_l2_nf1_topc1_viagl100_w16, pfet_botc0_guard1_l40_nf1_topc1_viagl100_w0p42, bias_ref, nfet_botc0_guard1_l4_nf1_topc1_viagl100_w16, rxh069_guard1_l12p5_nx4_viagl100, rxh069_dummy1_guard1_l14p79_nx37_viagl100, mim_l20_w20, pfet_botc0_guard1_l4_nf1_topc1_viagl100_w16, pfet_botc0_guard1_l8_nf1_topc1_viagl100_w16.
+DRC style is now "drc(full)"
+Loading DRC CIF style.
+No errors found.
+DRC_COUNT 0

@@ -132,6 +132,9 @@ def parse_mag(path: pathlib.Path):
         elif cur == "labels" and f and f[0] == "rlabel":
             layer, x1, y1, x2, y2 = f[1], *(int(v) / 200 for v in f[2:6])
             labels.append((f[7], layer, (x1 + x2) / 2, (y1 + y2) / 2))
+        elif cur == "labels" and f and f[0] == "flabel":
+            layer, x1, y1, x2, y2 = f[1], *(int(v) / 200 for v in f[2:6])
+            labels.append((f[-1], layer, (x1 + x2) / 2, (y1 + y2) / 2))
         elif f and f[0] == "string" and f[1] == "FIXED_BBOX":
             fixed = Rect(*(int(v) / 200 for v in f[2:6]))
     return layers, labels, fixed
@@ -246,6 +249,31 @@ def load_dev(path: pathlib.Path) -> DevCell:
             side = "ringB" if c.cy < d.bbox.cy else "ringT"
             d.pins.setdefault(side, c)
     return d
+
+
+def load_macro(name, magdir=MAGDIR) -> DevCell:
+    """A hierarchical cell written by Cell.write (e.g. ota5p, bias_ref) used as a macro.
+
+    bbox = all paint plus child-instance boxes; pins = its port labels (metal3 points).
+    """
+    path = magdir / f"{name}.mag"
+    layers, labels, _ = parse_mag(path)
+    boxes = [r for k, rs in layers.items() if k != "checkpaint" for r in rs]
+    tf = None
+    for line in path.read_text().splitlines():
+        f = line.split()
+        if f and f[0] == "transform":
+            tf = [int(v) for v in f[1:7]]
+        elif f and f[0] == "box" and tf:
+            a, b, c0, d, e, f0 = tf
+            x1, y1, x2, y2 = (int(v) for v in f[1:5])
+            xs = [a * x + b * y + c0 for x, y in ((x1, y1), (x2, y2))]
+            ys = [d * x + e * y + f0 for x, y in ((x1, y1), (x2, y2))]
+            boxes.append(Rect(min(xs) / 200, min(ys) / 200, max(xs) / 200, max(ys) / 200))
+            tf = None
+    ext = bbox(boxes)
+    pins = {text: Rect(x - 0.1, y - 0.1, x + 0.1, y + 0.1) for text, layer, x, y in labels}
+    return DevCell(name, ext, ext, pins, [])
 
 
 # ---------------------------------------------------------------- layout cell

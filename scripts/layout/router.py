@@ -42,7 +42,8 @@ class Hook:
     chan: str
     net: str
     x: float
-    via1_y: float | None      # None for a plain via2 tap (spine end)
+    via1_y: float | None      # riser start y (None for a plain via2 tap, e.g. a spine end)
+    start: str = "via1"       # "via1": starts on metal1; "via2": starts on metal3 (macro port, cap plate)
 
 
 class Router:
@@ -86,6 +87,11 @@ class Router:
             away_up = r.cy > inst.box.cy
             vy = snap(r.y1 + VIA1_PAD / 2 if away_up else r.y2 - VIA1_PAD / 2)
         self.hooks.append(Hook(chan, net, vx, vy))
+
+    def hook_m3(self, x, y, chan, net):
+        """Connect a metal3 point (macro port extension, capacitor plate tab) to net's track:
+        via2 at (x, y), metal2 riser, via2 on the track."""
+        self.hooks.append(Hook(chan, net, snap(x), snap(y), "via2"))
 
     def tap(self, chan, net, x):
         self.hooks.append(Hook(chan, net, snap(x), None))
@@ -180,7 +186,7 @@ class Router:
         for h in self.hooks:
             ty = self.channels[h.chan].y(h.net)
             if h.via1_y is not None:
-                c.via1(h.x, h.via1_y)
+                (c.via1 if h.start == "via1" else c.via2)(h.x, h.via1_y)
                 c.vwire("metal2", h.x, h.via1_y, ty, RISER_W)
             c.via2(h.x, ty)
             vias.setdefault((h.chan, h.net), []).append(h.x)
