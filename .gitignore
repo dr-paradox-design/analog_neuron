@@ -15,3 +15,7 @@ spice/*.log
 
 # Generated build output (sims, extraction, scratch)
 build/
+
+# Python bytecode
+__pycache__/
+*.pyc

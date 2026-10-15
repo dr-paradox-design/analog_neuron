@@ -12,3 +12,12 @@ CELL=$cell OUT=$ext "$root/scripts/magic_batch.sh" "$root/scripts/extract_lvs.tc
 netgen -batch lvs "$ext $cell" "$ref $cell" \
     "$PDK_ROOT/${PDK:-sky130A}/libs.tech/netgen/${PDK:-sky130A}_setup.tcl" \
     "$root/verif/lvs/${name}_comp.out" > "$root/verif/lvs/${name}.log" 2>&1
+# Verdict: netgen's "Final result" line says "match uniquely" even when device sizes differ,
+# so require both a unique match and no property errors.
+comp="$root/verif/lvs/${name}_comp.out"
+if grep -q "Circuits match uniquely" "$comp" && ! grep -q "Property errors were found" "$comp"; then
+    verdict="LVS_VERDICT PASS (topology and device properties match)"
+else
+    verdict="LVS_VERDICT FAIL (see $comp)"
+fi
+echo "$verdict" | tee -a "$root/verif/lvs/${name}.log"
