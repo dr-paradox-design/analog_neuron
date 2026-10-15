@@ -1,0 +1,66 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1792040424
+<< checkpaint >>
+rect -1567 -3542 1567 3542
+<< pwell >>
+rect -307 -2282 307 2282
+<< psubdiff >>
+rect -271 2212 -175 2246
+rect 175 2212 271 2246
+rect -271 2150 -237 2212
+rect 237 2150 271 2212
+rect -271 -2212 -237 -2150
+rect 237 -2212 271 -2150
+rect -271 -2246 -175 -2212
+rect 175 -2246 271 -2212
+<< psubdiffcont >>
+rect -175 2212 175 2246
+rect -271 -2150 -237 2150
+rect 237 -2150 271 2150
+rect -175 -2246 175 -2212
+<< xpolycontact >>
+rect -141 1684 141 2116
+rect -141 -2116 141 -1684
+<< xpolyres >>
+rect -141 -1684 141 1684
+<< locali >>
+rect -271 2212 -175 2246
+rect 175 2212 271 2246
+rect 237 2150 271 2212
+rect 237 -2212 271 -2150
+rect -271 -2246 -175 -2212
+rect 175 -2246 271 -2212
+<< viali >>
+rect -271 2150 -237 2212
+rect -271 -2150 -237 2150
+rect -125 1701 125 2098
+rect -125 -2098 125 -1701
+rect -271 -2212 -237 -2150
+<< metal1 >>
+rect -277 2212 -231 2224
+rect -277 -2212 -271 2212
+rect -237 -2212 -231 2212
+rect -131 2098 131 2110
+rect -131 1701 -125 2098
+rect 125 1701 131 2098
+rect -131 1689 131 1701
+rect -131 -1701 131 -1689
+rect -131 -2098 -125 -1701
+rect 125 -2098 131 -1701
+rect -131 -2110 131 -2098
+rect -277 -2224 -231 -2212
+<< labels >>
+rlabel psubdiffcont 0 -2229 0 -2229 0 B
+port 1 nsew
+rlabel xpolycontact 0 2081 0 2081 0 R1
+port 2 nsew
+rlabel xpolycontact 0 -2081 0 -2081 0 R2
+port 3 nsew
+<< properties >>
+string FIXED_BBOX -254 -2229 254 2229
+string gencell sky130_fd_pr__res_xhigh_po_1p41
+string library sky130
+string parameters w 1.410 l 17 m 1 nx 1 wmin 1.410 lmin 0.50 class resistor rho 2000 val 24.38k dummy 0 dw 0.0 term 188.2 sterm 0.0 caplen 0 wmax 1.410 guard 1 glc 1 grc 1 gtc 1 gbc 1 compatible {sky130_fd_pr__res_xhigh_po_0p35  sky130_fd_pr__res_xhigh_po_0p69 sky130_fd_pr__res_xhigh_po_1p41  sky130_fd_pr__res_xhigh_po_2p85 sky130_fd_pr__res_xhigh_po_5p73} snake 0 full_metal 1 n_guard 0 hv_guard 0 vias 1 viagb 0 viagt 0 viagl 100 viagr 0 doports 1
+<< end >>

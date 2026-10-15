@@ -55,9 +55,9 @@ def build():
     m4 = c.place(ld_d, "M4", nx + ld_d.bbox.w + NMOS_GAP, nrow_y)
     right = max(m2.box.x2, m4.box.x2) + EDGE
 
-    r.channel("top", top_y0, ["VDD", "VP", "T", "INP", "INN"])
-    r.channel("mid", mid_y0, ["D1", "OUT"])
-    r.channel("bot", vss_y, ["VSS"])
+    r.channel("top", top_y0, 5, fixed={"VDD": 4})       # VDD outermost
+    r.channel("mid", mid_y0, 2)
+    r.channel("bot", vss_y, 1)
 
     # tail
     r.hook(mt, "S", "top", "VDD")
@@ -84,7 +84,7 @@ def build():
         r.port(ch, net, 0.25, i, use)
     for ch, net in (("top", "VDD"), ("bot", "VSS")):     # power tracks span the block
         r.extend(ch, net, right)
-    r.draw_tracks()
+    r.finalize()
     path = c.write()
     print(f"wrote {path}  extent {c.extent()}")
     return c
