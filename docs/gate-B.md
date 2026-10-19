@@ -28,12 +28,12 @@ Checks on the checks:
 
 | Check | Schematic | Post-layout | Spec |
 |---|---|---|---|
-| Slope (w) over 45 PVT | 1.903 – 1.995 | 1.904 – 1.995 | w = 2 |
-| Knee over 45 PVT | 0.526 – 0.645 V | 0.525 – 0.644 V | 0.326·VDD |
-| MAC linearity (INL) | ≤ 0.71 % | ≤ 0.70 % | ≤ 5 % ✅ |
-| Peak power | 37.8 – 78.3 µW | 37.6 – 78.0 µW | < 100 µW ✅ |
+| Slope (w) over 45 PVT | 1.903 – 1.995 | 1.903 – 1.995 | w = 2 |
+| Knee over 45 PVT | 0.526 – 0.646 V | 0.525 – 0.645 V | 0.326·VDD |
+| MAC linearity (INL) | ≤ 0.71 % | ≤ 0.71 % | ≤ 5 % ✅ |
+| Peak power | 37.7 – 78.3 µW | 37.5 – 78.0 µW | < 100 µW ✅ |
 | Signal-loop phase margin, 45 PVT × 3 inputs | ≥ 71.7° (converter alone) | **≥ 62.5°** | ≥ 60° ✅ |
-| Knee-loop phase margin, 45 PVT × 3 inputs | — | **≥ 85.8°** | ≥ 60° ✅ |
+| Knee-loop phase margin, 45 PVT × 3 inputs | — | **≥ 85.7°** | ≥ 60° ✅ |
 
 Evidence: `verif/sim/post-layout/neuron_pex_pvt.txt`, `verif/sim/post-layout/neuron_pex_stability_pvt.txt`.
 

@@ -1,0 +1,43 @@
+
+Magic 8.3 revision 683 - Compiled on Thu Sep 17 10:36:37 PM IST 2026.
+Starting magic under Tcl interpreter
+Using the terminal as the console.
+WARNING: RLIMIT_NOFILE is above 1024 and Tcl_Version<9 this may cause runtime issues [rlim_cur=1048576]
+Using NULL graphics device.
+Processing system .magicrc file
+Switching to WIRING tool.
+Switching to NETLIST tool.
+Switching to PICK tool.
+Switching to BOX tool.
+Sourcing design .magicrc for technology sky130A ...
+2 Magic internal units = 1 Lambda
+Input style sky130(): scaleFactor=2, multiplier=2
+The following types are not handled by extraction and will be treated as non-electrical types:
+    ubm 
+Scaled tech values by 2 / 1 to match internal grid scaling
+Loading sky130A Device Generator Menu ...
+Loading "/tmp/claude-1000/-home-dr-paradox-Documents-analog-neuron/bf19223d-b334-4462-8348-8c5fb58f7df9/scratchpad/xverify2/gdsdrc.tcl" from command line.
+Warning: Calma reading is not undoable!  I hope that's OK.
+Library written using GDS-II Release 3.0
+Library name: analog_neuron
+Reading "pfet_botc0_guard1_l1_nf1_topc1_viagl100_w10".
+Reading "nfet_botc0_guard1_l2_nf1_topc1_viagl100_w2".
+Reading "pfet_botc0_guard1_l2_nf1_topc1_viagl100_w16".
+Reading "ota5p".
+Reading "nfet_botc0_guard1_l2_nf1_topc1_viagl100_w20".
+Reading "nfet_botc0_guard1_l0p5_nf1_topc1_viagr100_w16".
+Reading "nfet_botc0_guard1_l1_nf1_topc1_viagl100_w1".
+Reading "rxh141_guard1_l17_viagl100".
+Reading "pfet_botc0_guard1_l40_nf1_topc1_viagl100_w0p42".
+Reading "bias_ref".
+Reading "nfet_botc0_guard1_l4_nf1_topc1_viagl100_w16".
+Reading "rxh069_guard1_l12p5_nx4_viagl100".
+Reading "rxh069_dummy1_guard1_l14p79_nx37_viagl100".
+Reading "mim_l20_w20".
+Reading "pfet_botc0_guard1_l4_nf1_topc1_viagl100_w16".
+Reading "pfet_botc0_guard1_l8_nf1_topc1_viagl100_w16".
+Reading "neuron_core".
+Reading "analog_neuron".
+DRC style is now "drc(full)"
+Loading DRC CIF style.
+No errors found.

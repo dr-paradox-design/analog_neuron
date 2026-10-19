@@ -62,15 +62,15 @@ Chosen from a 100-run Monte Carlo per variant (tt_mm, 27 °C, 1.8 V):
 |---|---|---|
 | 45 PVT points (5 corners × −40/27/125 °C × 1.62/1.8/1.98 V) | 45/45 clean | all corners |
 | Slope (w) over PVT | 1.903 – 1.995 | w = 2 |
-| Knee over PVT | 0.526 – 0.645 V = 0.326·VDD (flat over T and process) | VDD ratio |
+| Knee over PVT | 0.526 – 0.646 V = 0.326·VDD (flat over T and process) | VDD ratio |
 | MAC linearity (INL, knee + 0.1 V to 1.2 V) | ≤ 0.71 % | ≤ 5 % ✅ |
 | Output below the knee | ≤ 26 µV | — |
 | R −20 % / +20 % (all xhigh_po), 45 PVT each | slope 1.902 – 1.996, knee unchanged, INL ≤ 0.76 % | ✅ |
 | Monte Carlo, 200 runs: slope σ | **1.47 %** (1.887 – 2.037) | σ < 2–3 % ✅ |
 | Monte Carlo: knee σ / INL worst | 22.3 mV / 0.81 % | — |
 | V→I loop phase margin, 45 PVT × 3 inputs | ≥ 71.7° (crossover 2.0 – 5.2 MHz) | ≥ 60° ✅ |
-| Peak power, R nominal | 37.8 – 78.3 µW | < 100 µW ✅ |
-| **Peak power, R −20 %** | **47.3 – 98.1 µW** | < 100 µW ⚠️ no room for a buffer |
+| Peak power, R nominal | 37.7 – 78.3 µW | < 100 µW ✅ |
+| **Peak power, R −20 %** | **47.3 – 98.2 µW** | < 100 µW ⚠️ no room for a buffer |
 
 SkyWater documents xhigh_po electrical specs as "still TBD", so ±20 % sheet-resistance spread is
 an assumption, deliberately conservative.

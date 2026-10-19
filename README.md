@@ -42,10 +42,10 @@ Post-layout (extracted devices and parasitic capacitance), 5 process corners × 
 
 | | Result | Spec |
 |---|---|---|
-| MAC linearity (INL) | **≤ 0.70 %** | ≤ 5 % ✅ |
+| MAC linearity (INL) | **≤ 0.71 %** | ≤ 5 % ✅ |
 | Weight accuracy σ (200-run Monte Carlo) | **1.47 %** | < 2–3 % ✅ |
 | Weight (slope) | 1.90 – 2.00 | 2 |
-| Total power | **38 – 78 µW** | < 100 µW ✅ |
+| Total power | **37.5 – 78.0 µW** | < 100 µW ✅ |
 | Loop phase margin | **≥ 62.5°** | ≥ 60° ✅ |
 | Bias current (incl. ±20 % resistor spread) | 1.13 – 3.89 µA | 1 – 5 µA ✅ |
 | Area | 180 × 115 µm | 180 × 115 µm ✅ |

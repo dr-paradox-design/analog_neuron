@@ -28,7 +28,7 @@ def main():
     ax.axvline(VK, color=GRID, lw=1.0, zorder=0)
     ax.annotate("knee  V$_k$ = 0.326·VDD", xy=(VK, 0.0), xytext=(VK + 0.04, 0.55), color=FG, fontsize=9,
                 arrowprops=dict(arrowstyle="-|>", color=MUTED, lw=0.8))
-    ax.text(0.31, 0.07, "across 45 PVT corners:  slope 1.90 – 2.00  ·  INL ≤ 0.70 %", color=MUTED, fontsize=8.5)
+    ax.text(0.31, 0.07, "across 45 PVT corners:  slope 1.90 – 2.00  ·  INL ≤ 0.71 %", color=MUTED, fontsize=8.5)
     ax.set_xlim(0.3, 1.2)
     ax.set_ylim(-0.05, 1.25)
     ax.set_xlabel("input  x  (V)", color=FG, fontsize=10)

@@ -23,8 +23,10 @@ Single-input analog ReLU neuron, SKY130A, 1.8 V:
 | DRC evidence | `verification/drc/` — `analog_neuron_drc.log`: `No errors found`, `DRC_COUNT 0` |
 | LVS evidence | `verification/lvs/` — `analog_neuron.log`: `Circuits match uniquely`, `LVS_VERDICT PASS` |
 
-Also included: `spice/lvs/analog_neuron_ref.spice` (LVS reference netlist) and `verification/sim/` (result
-tables of the schematic and post-layout runs summarised in the PDF).
+Also included: `spice/lvs/analog_neuron_ref.spice` (LVS reference netlist), `verification/sim/` (result
+tables of the schematic and post-layout runs summarised in the PDF) and `verification/crossverify/`:
+independent checks of the GDS itself — KLayout SKY130 manufacturing-rule DRC, pin-label and zero-area
+decks, Magic DRC and LVS of the GDS read back, and the antenna check (all clean; see `SUMMARY.md` there).
 
 ## Pins (origin at the lower-left corner of the cell)
 
@@ -44,10 +46,10 @@ tables of the schematic and post-layout runs summarised in the PDF).
 |---|---|---|
 | DRC (Magic, sky130A `drc(full)`) | 0 violations | clean |
 | LVS (netgen, `sky130A_setup.tcl`) | unique match, no property errors | match |
-| MAC linearity, post-layout, 45 PVT points | INL ≤ 0.70 % | ≤ 5 % |
+| MAC linearity, post-layout, 45 PVT points | INL ≤ 0.71 % | ≤ 5 % |
 | Weight mismatch (200-run Monte Carlo) | σ = 1.47 % | < 2–3 % |
 | Loop phase margin, post-layout, 45 PVT | ≥ 62.5° | ≥ 60° |
-| Peak power, 45 PVT | 38 – 78 µW | — |
+| Peak power, 45 PVT | 37.5 – 78.0 µW | — |
 
 PVT = tt/ff/ss/sf/fs × −40 / 27 / 125 °C × 1.62 / 1.8 / 1.98 V. Details and figures: `analog_neuron_validation.pdf`.
 

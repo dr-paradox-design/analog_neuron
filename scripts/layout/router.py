@@ -194,6 +194,7 @@ class Router:
             ys = [self.channels[ch].y(net) for ch in chans]
             c.vwire("metal2", x, min(ys), max(ys), RISER_W)
         keys = set(vias) | set(self.extents)
+        spans = {}
         for key in keys:
             chan, net = key
             y = self.channels[chan].y(net)
@@ -206,10 +207,15 @@ class Router:
             if x2 - x1 < VIA2_PAD_M3:
                 x1, x2 = (x1 + x2) / 2 - VIA2_PAD_M3 / 2, (x1 + x2) / 2 + VIA2_PAD_M3 / 2
             c.hwire("metal3", x1, x2, y, TRACK_W)
+            spans[key] = (x1, x2)
             # name the net (non-port label) so extraction keeps readable node names
             if (chan, net) not in {(p[0], p[1]) for p in self.ports}:
                 xm = snap((x1 + x2) / 2)
                 c.label(net, "metal3", Rect(xm - 0.1, y - 0.1, xm + 0.1, y + 0.1), None)
         for chan, net, x, index, use in self.ports:
+            # the label becomes a pin shape in GDS: keep it entirely on the track, extending
+            # inward from the track end the port sits on (never past it)
             y = self.channels[chan].y(net)
-            c.label(net, "metal3", Rect(x - 0.1, y - 0.1, x + 0.1, y + 0.1), index, use)
+            x1, x2 = spans[(chan, net)]
+            r = Rect(x, y - 0.1, x + 0.2, y + 0.1) if abs(x - x1) < abs(x - x2) else Rect(x - 0.2, y - 0.1, x, y + 0.1)
+            c.label(net, "metal3", r, index, use)

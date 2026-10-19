@@ -1,0 +1,88 @@
+
+Magic 8.3 revision 683 - Compiled on Thu Sep 17 10:36:37 PM IST 2026.
+Starting magic under Tcl interpreter
+Using the terminal as the console.
+WARNING: RLIMIT_NOFILE is above 1024 and Tcl_Version<9 this may cause runtime issues [rlim_cur=1048576]
+Using NULL graphics device.
+Processing system .magicrc file
+Switching to WIRING tool.
+Switching to NETLIST tool.
+Switching to PICK tool.
+Switching to BOX tool.
+Sourcing design .magicrc for technology sky130A ...
+2 Magic internal units = 1 Lambda
+Input style sky130(): scaleFactor=2, multiplier=2
+The following types are not handled by extraction and will be treated as non-electrical types:
+    ubm 
+Scaled tech values by 2 / 1 to match internal grid scaling
+Loading sky130A Device Generator Menu ...
+Loading "/tmp/claude-1000/-home-dr-paradox-Documents-analog-neuron/bf19223d-b334-4462-8348-8c5fb58f7df9/scratchpad/xverify2/antenna.tcl" from command line.
+"analog_neuron" has a zero timestamp; it should be written out
+    to establish a correct timestamp.
+Processing timestamp mismatches.
+Cell neuron_core read from current working directory
+"neuron_core" has a zero timestamp; it should be written out
+    to establish a correct timestamp.
+Cell pfet_botc0_guard1_l8_nf1_topc1_viagl100_w16 read from current working directory
+Cell pfet_botc0_guard1_l4_nf1_topc1_viagl100_w16 read from current working directory
+Cell mim_l20_w20 read from current working directory
+Cell rxh069_dummy1_guard1_l14p79_nx37_viagl100 read from current working directory
+Cell rxh069_guard1_l12p5_nx4_viagl100 read from current working directory
+Cell nfet_botc0_guard1_l4_nf1_topc1_viagl100_w16 read from current working directory
+Cell bias_ref read from current working directory
+"bias_ref" has a zero timestamp; it should be written out
+    to establish a correct timestamp.
+Cell pfet_botc0_guard1_l40_nf1_topc1_viagl100_w0p42 read from current working directory
+Cell pfet_botc0_guard1_l2_nf1_topc1_viagl100_w16 read from current working directory
+Cell rxh141_guard1_l17_viagl100 read from current working directory
+Cell nfet_botc0_guard1_l1_nf1_topc1_viagl100_w1 read from current working directory
+Cell nfet_botc0_guard1_l0p5_nf1_topc1_viagr100_w16 read from current working directory
+Cell nfet_botc0_guard1_l2_nf1_topc1_viagl100_w20 read from current working directory
+Cell ota5p read from current working directory
+"ota5p" has a zero timestamp; it should be written out
+    to establish a correct timestamp.
+Cell nfet_botc0_guard1_l2_nf1_topc1_viagl100_w2 read from current working directory
+Cell pfet_botc0_guard1_l1_nf1_topc1_viagl100_w10 read from current working directory
+Timestamp mismatches found in these cells: pfet_botc0_guard1_l1_nf1_topc1_viagl100_w10, nfet_botc0_guard1_l2_nf1_topc1_viagl100_w2, ota5p, nfet_botc0_guard1_l2_nf1_topc1_viagl100_w20, nfet_botc0_guard1_l0p5_nf1_topc1_viagr100_w16, nfet_botc0_guard1_l1_nf1_topc1_viagl100_w1, rxh141_guard1_l17_viagl100, pfet_botc0_guard1_l2_nf1_topc1_viagl100_w16, pfet_botc0_guard1_l40_nf1_topc1_viagl100_w0p42, bias_ref, nfet_botc0_guard1_l4_nf1_topc1_viagl100_w16, rxh069_guard1_l12p5_nx4_viagl100, rxh069_dummy1_guard1_l14p79_nx37_viagl100, mim_l20_w20, pfet_botc0_guard1_l4_nf1_topc1_viagl100_w16, pfet_botc0_guard1_l8_nf1_topc1_viagl100_w16, neuron_core.
+Extracting pfet_botc0_guard1_l1_nf1_topc1_viagl100_w10 into pfet_botc0_guard1_l1_nf1_topc1_viagl100_w10.ext:
+Processing pfet_botc0_guard1_l1_nf1_topc1_viagl100_w10
+Extracting nfet_botc0_guard1_l2_nf1_topc1_viagl100_w2 into nfet_botc0_guard1_l2_nf1_topc1_viagl100_w2.ext:
+Processing nfet_botc0_guard1_l2_nf1_topc1_viagl100_w2
+Extracting pfet_botc0_guard1_l2_nf1_topc1_viagl100_w16 into pfet_botc0_guard1_l2_nf1_topc1_viagl100_w16.ext:
+Processing pfet_botc0_guard1_l2_nf1_topc1_viagl100_w16
+Extracting ota5p into ota5p.ext:
+Processing ota5p
+Extracting nfet_botc0_guard1_l2_nf1_topc1_viagl100_w20 into nfet_botc0_guard1_l2_nf1_topc1_viagl100_w20.ext:
+Processing nfet_botc0_guard1_l2_nf1_topc1_viagl100_w20
+Extracting nfet_botc0_guard1_l0p5_nf1_topc1_viagr100_w16 into nfet_botc0_guard1_l0p5_nf1_topc1_viagr100_w16.ext:
+Processing nfet_botc0_guard1_l0p5_nf1_topc1_viagr100_w16
+Extracting nfet_botc0_guard1_l1_nf1_topc1_viagl100_w1 into nfet_botc0_guard1_l1_nf1_topc1_viagl100_w1.ext:
+Processing nfet_botc0_guard1_l1_nf1_topc1_viagl100_w1
+Extracting rxh141_guard1_l17_viagl100 into rxh141_guard1_l17_viagl100.ext:
+Processing rxh141_guard1_l17_viagl100
+Extracting pfet_botc0_guard1_l40_nf1_topc1_viagl100_w0p42 into pfet_botc0_guard1_l40_nf1_topc1_viagl100_w0p42.ext:
+Processing pfet_botc0_guard1_l40_nf1_topc1_viagl100_w0p42
+Extracting bias_ref into bias_ref.ext:
+Processing bias_ref
+Extracting nfet_botc0_guard1_l4_nf1_topc1_viagl100_w16 into nfet_botc0_guard1_l4_nf1_topc1_viagl100_w16.ext:
+Processing nfet_botc0_guard1_l4_nf1_topc1_viagl100_w16
+Extracting rxh069_guard1_l12p5_nx4_viagl100 into rxh069_guard1_l12p5_nx4_viagl100.ext:
+Processing rxh069_guard1_l12p5_nx4_viagl100
+Extracting rxh069_dummy1_guard1_l14p79_nx37_viagl100 into rxh069_dummy1_guard1_l14p79_nx37_viagl100.ext:
+Processing rxh069_dummy1_guard1_l14p79_nx37_viagl100
+Extracting mim_l20_w20 into mim_l20_w20.ext:
+Processing mim_l20_w20
+Extracting pfet_botc0_guard1_l4_nf1_topc1_viagl100_w16 into pfet_botc0_guard1_l4_nf1_topc1_viagl100_w16.ext:
+Processing pfet_botc0_guard1_l4_nf1_topc1_viagl100_w16
+Extracting pfet_botc0_guard1_l8_nf1_topc1_viagl100_w16 into pfet_botc0_guard1_l8_nf1_topc1_viagl100_w16.ext:
+Processing pfet_botc0_guard1_l8_nf1_topc1_viagl100_w16
+Extracting neuron_core into neuron_core.ext:
+Processing neuron_core
+Extracting analog_neuron into analog_neuron.ext:
+Processing analog_neuron
+ANTENNA_BEGIN
+Reading extract file.
+Building flattened netlist.
+Running antenna checks.
+antennacheck finished.
+ANTENNA_END

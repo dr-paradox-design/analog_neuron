@@ -33,6 +33,8 @@ for cell in ("analog_neuron", "neuron_core", "bias_ref", "ota5p"):
     FILES[f"verification/drc/{cell}_drc.log"] = f"verif/drc/{cell}_drc.log"
     FILES[f"verification/lvs/{cell}.log"] = f"verif/lvs/{cell}.log"
     FILES[f"verification/lvs/{cell}_comp.out"] = f"verif/lvs/{cell}_comp.out"
+for p in sorted((ROOT / "verif" / "crossverify").glob("*")):
+    FILES[f"verification/crossverify/{p.name}"] = str(p.relative_to(ROOT))
 for sub in ("gate-A", "post-layout"):
     for p in sorted((ROOT / "verif" / "sim" / sub).glob("*.txt")):
         FILES[f"verification/sim/{sub}/{p.name}"] = str(p.relative_to(ROOT))

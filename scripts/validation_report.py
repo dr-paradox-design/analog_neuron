@@ -9,6 +9,7 @@ with matplotlib, laid out in HTML and printed to PDF with headless Chrome.
 Usage: python3 scripts/validation_report.py
 """
 import base64
+import math
 import datetime
 import io
 import json
@@ -42,6 +43,16 @@ plt.rcParams.update({
     "axes.titlecolor": INK, "axes.titlelocation": "left", "axes.grid": True, "grid.color": "#eaeef2",
     "grid.linewidth": 0.6, "legend.frameon": False, "legend.fontsize": 7.5, "savefig.dpi": 200,
 })
+
+
+def up(x, d=2):
+    """Upper bound rounded up to d decimals (never understate a maximum)."""
+    return f"{math.ceil(float(x) * 10**d - 1e-9) / 10**d:.{d}f}"
+
+
+def dn(x, d=2):
+    """Lower bound rounded down to d decimals (never overstate a minimum)."""
+    return f"{math.floor(float(x) * 10**d + 1e-9) / 10**d:.{d}f}"
 
 
 def load(name):
@@ -252,14 +263,14 @@ html = f"""<!doctype html><html><head><meta charset="utf-8"><title>analog_neuron
 <h2>1. Summary</h2>
 <table>
 <tr><th>Quantity</th><th>Result</th><th>Target</th><th></th></tr>
-<tr><td>MAC linearity (INL, knee + 0.1 V … 1.2 V)</td><td>≤ {S['inl']:.2f} % (post-layout, 45 PVT); ≤ {S['inl_rs']:.2f} % at R ±20 %; ≤ {S['mc_inl']:.2f} % (Monte Carlo)</td><td>≤ 5 %</td><td class="ok">pass</td></tr>
+<tr><td>MAC linearity (INL, knee + 0.1 V … 1.2 V)</td><td>≤ {up(S['inl'])} % (post-layout, 45 PVT); ≤ {up(S['inl_rs'])} % at R ±20 %; ≤ {up(S['mc_inl'])} % (Monte Carlo)</td><td>≤ 5 %</td><td class="ok">pass</td></tr>
 <tr><td>Weight accuracy, mismatch ({S['mc_n']}-run Monte Carlo)</td><td>σ = {S['mc_slope'][2]:.2f} % (mean slope {S['mc_slope'][0]:.3f})</td><td>σ &lt; 2–3 %</td><td class="ok">pass</td></tr>
-<tr><td>Weight (slope) over PVT</td><td>{S['slope'][0]:.3f} – {S['slope'][1]:.3f}</td><td>2</td><td></td></tr>
-<tr><td>Knee over PVT</td><td>{S['knee'][0]:.3f} – {S['knee'][1]:.3f} V (= 0.326 · VDD; flat over temperature and process)</td><td>VDD ratio</td><td></td></tr>
-<tr><td>Peak supply power</td><td>{S['pwr'][0]:.1f} – {S['pwr'][1]:.1f} µW; {S['pwr_rlo']:.1f} µW at R −20 %</td><td>&lt; 100 µW (design target)</td><td class="ok">pass</td></tr>
-<tr><td>Bias current (incl. R ±20 %)</td><td>{S['ibias'][0]:.2f} – {S['ibias'][1]:.2f} µA</td><td>1 – 5 µA</td><td class="ok">pass</td></tr>
-<tr><td>Bias start-up</td><td>starts at every PVT point, ≤ {S['start_t']:.1f} µs after a 1 µs ramp; settled current identical across ramps and brown-out (≤ {S['start_dev']:.3f} %)</td><td>always starts</td><td class="ok">pass</td></tr>
-<tr><td>Loop phase margin (post-layout)</td><td>signal loop ≥ {S['pm_s']:.1f}°, knee loop ≥ {S['pm_k']:.1f}°</td><td>≥ 60°</td><td class="ok">pass</td></tr>
+<tr><td>Weight (slope) over PVT</td><td>{dn(S['slope'][0], 3)} – {up(S['slope'][1], 3)}</td><td>2</td><td></td></tr>
+<tr><td>Knee over PVT</td><td>{dn(S['knee'][0], 3)} – {up(S['knee'][1], 3)} V (= 0.326 · VDD; flat over temperature and process)</td><td>VDD ratio</td><td></td></tr>
+<tr><td>Peak supply power</td><td>{dn(S['pwr'][0], 1)} – {up(S['pwr'][1], 1)} µW; {up(S['pwr_rlo'], 1)} µW at R −20 %</td><td>&lt; 100 µW (design target)</td><td class="ok">pass</td></tr>
+<tr><td>Bias current (incl. R ±20 %)</td><td>{dn(S['ibias'][0])} – {up(S['ibias'][1])} µA</td><td>1 – 5 µA</td><td class="ok">pass</td></tr>
+<tr><td>Bias start-up</td><td>starts at every PVT point, ≤ {up(S['start_t'], 1)} µs after a 1 µs ramp; settled current identical across ramps and brown-out (≤ {S['start_dev']:.3f} %)</td><td>always starts</td><td class="ok">pass</td></tr>
+<tr><td>Loop phase margin (post-layout)</td><td>signal loop ≥ {dn(S['pm_s'], 1)}°, knee loop ≥ {dn(S['pm_k'], 1)}°</td><td>≥ 60°</td><td class="ok">pass</td></tr>
 <tr><td>DRC (Magic, sky130A <code>drc(full)</code>)</td><td>0 violations</td><td>clean</td><td class="ok">pass</td></tr>
 <tr><td>LVS (netgen, <code>sky130A_setup.tcl</code>)</td><td>circuits match uniquely, no property errors</td><td>match</td><td class="ok">pass</td></tr>
 <tr><td>Area</td><td>180.000 µm × 115.000 µm</td><td>180 µm × 115 µm</td><td class="ok">pass</td></tr>
@@ -328,7 +339,7 @@ results by less than 0.1 %.</figcaption></figure>
 <h3>5.4 Bias reference and start-up</h3>
 <figure><img src="{F_BIAS}"><figcaption>Figure 5 — Bias current range at each temperature for nominal and ±20 %
 resistance. Start-up was checked at all 45 points with a 1 µs ramp, a 100 µs ramp, a brown-out to 0.8 V and a
-quasi-static DC ramp; the reference turns on by VDD = {S['start_von']:.2f} V at the latest.</figcaption></figure>
+quasi-static DC ramp; the reference turns on by VDD = {up(S['start_von'])} V at the latest.</figcaption></figure>
 
 <h3>5.5 Stability</h3>
 <figure><img src="{F_STAB}"><figcaption>Figure 6 — Post-layout phase margin of both converter loops at all 45 PVT
@@ -361,7 +372,7 @@ python3 scripts/sim.py spice/bias/bias_tb.cir --pvt                        # bia
 <li class="note"><b>Unbuffered output.</b> Y has ≈ 300 kΩ source impedance. A 10 MΩ load reduces the gain by
 ≈ 2.8 %; a 1 MΩ load by ≈ 22 %. Linearity is unaffected. The output should be read by a high-impedance input.</li>
 <li><b>xhigh_po spread.</b> The ±20 % sheet-resistance range is an assumption; at −20 % combined with 125 °C and
-1.98 V the core reaches {S['pwr_rlo']:.1f} µW.</li>
+1.98 V the core reaches {up(S['pwr_rlo'], 1)} µW.</li>
 <li><b>Systematic weight.</b> The slope is 1–5 % below 2 (output-mirror drain-voltage difference), largest at low
 VDD and −40 °C.</li>
 <li><b>Not run:</b> antenna-rule check.</li>
