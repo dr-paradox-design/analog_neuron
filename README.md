@@ -16,15 +16,27 @@
 
 <sub>✅ schematic sign-off&nbsp;&nbsp;→&nbsp;&nbsp;✅ layout sign-off&nbsp;&nbsp;→&nbsp;&nbsp;✅ GDS cross-verified&nbsp;&nbsp;→&nbsp;&nbsp;⏳ submission to Silicluster v3 (deadline 31 Oct 2026)</sub>
 
+<table>
+<tr>
+<td align="center" width="25%"><h2>≤ 0.71 %</h2><b>MAC linearity</b><br><sub>INL, spec ≤ 5 %</sub></td>
+<td align="center" width="25%"><h2>1.47 %</h2><b>weight σ</b><br><sub>200-run Monte Carlo, spec &lt; 2–3 %</sub></td>
+<td align="center" width="25%"><h2>≥ 62.5°</h2><b>phase margin</b><br><sub>post-layout, all 45 corners</sub></td>
+<td align="center" width="25%"><h2>≤ 78 µW</h2><b>total power</b><br><sub>45 corners; 98 µW at R −20 %</sub></td>
+</tr>
+</table>
+
 </div>
 
-## What it computes
+## See it work
 
 <div align="center">
 
 **y = 2 · max(0, x − V<sub>k</sub>)**  with the knee **V<sub>k</sub> = 0.326 · VDD** (0.586 V at 1.8 V)
 
-<img src="docs/img/transfer.png" alt="Post-layout transfer function" width="80%">
+<img src="docs/img/neuron.gif" alt="Animation: as the input x sweeps, the signal current grows, the knee current stays fixed, and output current flows only once the signal exceeds the knee" width="100%">
+
+<sub>As x sweeps 0.3 → 1.2 V, the signal current bundle grows (each strand ≈ 0.5 µA), the knee bundle stays fixed,
+and output current flows only once the signal exceeds the knee — the ReLU. Right: the post-layout transfer curve.</sub>
 
 </div>
 
@@ -173,6 +185,10 @@ Full derivations and design decisions: [architecture (ADR-001)](docs/ADR-001-neu
 
 ## Results
 
+<div align="center">
+<img src="docs/img/transfer.png" alt="Post-layout transfer function at −40, 27 and 125 °C" width="80%">
+</div>
+
 Post-layout (extracted devices and parasitic capacitance), 5 process corners × −40 / 27 / 125 °C × 1.62 / 1.8 / 1.98 V.
 
 | | Result | Spec |
@@ -227,7 +243,8 @@ Silicluster v3 call (§10) asks for:
 | Simulation and validation document | [`analog_neuron_validation.pdf`](submit/analog_neuron_validation.pdf) |
 | DRC / LVS evidence | logs for every cell plus the GDS cross-verification |
 
-## Repository
+<details>
+<summary><b>Repository layout</b></summary>
 
 ```
 spice/      netlists and testbenches   (bias/ · neuron/ · lvs/ · smoke/ · char/)
@@ -240,7 +257,10 @@ docs/       design notes, sign-offs, images
 submit/     Verilog interface, validation report, submission README
 ```
 
-## Reproduce
+</details>
+
+<details>
+<summary><b>Reproduce everything</b> — simulation, layout, verification, report</summary>
 
 Requires Magic, netgen, ngspice, KLayout and the SKY130A PDK (`PDK_ROOT=$HOME/.ciel`, `PDK=sky130A`).
 
@@ -265,6 +285,8 @@ klayout -b -rd input=gds/analog_neuron.gds -rd top_cell=analog_neuron -rd report
 python3 scripts/validation_report.py
 python3 scripts/make_submission.py
 ```
+
+</details>
 
 <sub>Tools: Magic 8.3.683 · netgen 1.5.324 · ngspice 47 · KLayout 0.30 · SKY130A via ciel.
 Details: <a href="docs/ADR-001-neuron-architecture.md">architecture</a> ·
