@@ -2,265 +2,181 @@
 
 # analog_neuron
 
-**A single-input analog ReLU neuron in SkyWater SKY130: schematic to GDS with a fully open-source flow.**
+**An analog ReLU neuron in SkyWater SKY130, taken from schematic to GDS with an open-source flow.**
 
-![process](https://img.shields.io/badge/process-SKY130A-1f6feb?style=flat-square)
-![area](https://img.shields.io/badge/area-180_×_115_µm-6e7681?style=flat-square)
-![DRC](https://img.shields.io/badge/DRC-Magic_+_KLayout_clean-2ea043?style=flat-square)
-![LVS](https://img.shields.io/badge/LVS-clean-2ea043?style=flat-square)
-![antenna](https://img.shields.io/badge/antenna-clean-2ea043?style=flat-square)
-![PVT](https://img.shields.io/badge/post--layout_PVT-45%2F45-2ea043?style=flat-square)
-![status](https://img.shields.io/badge/Silicluster_v3-submission_ready-8957e5?style=flat-square)
-
-<img src="docs/img/layout.png" alt="Layout of analog_neuron" width="100%">
-
-<sub>✅ schematic sign-off&nbsp;&nbsp;→&nbsp;&nbsp;✅ layout sign-off&nbsp;&nbsp;→&nbsp;&nbsp;✅ GDS cross-verified&nbsp;&nbsp;→&nbsp;&nbsp;⏳ submission to Silicluster v3 (deadline 31 Oct 2026)</sub>
-
-<table>
-<tr>
-<td align="center" width="25%"><h2>≤ 0.71 %</h2><b>MAC linearity</b><br><sub>INL, spec ≤ 5 %</sub></td>
-<td align="center" width="25%"><h2>1.47 %</h2><b>weight σ</b><br><sub>200-run Monte Carlo, spec &lt; 2–3 %</sub></td>
-<td align="center" width="25%"><h2>≥ 62.5°</h2><b>phase margin</b><br><sub>post-layout, all 45 corners</sub></td>
-<td align="center" width="25%"><h2>≤ 78 µW</h2><b>total power</b><br><sub>45 corners; 98 µW at R −20 %</sub></td>
-</tr>
-</table>
-
-</div>
-
-## See it work
-
-<div align="center">
-
-**y = 2 · max(0, x − V<sub>k</sub>)**  with the knee **V<sub>k</sub> = 0.326 · VDD** (0.586 V at 1.8 V)
+![process](https://img.shields.io/badge/process-SKY130A-1f6feb?style=flat-square&labelColor=30363d)
+![flow](https://img.shields.io/badge/flow-Magic_%C2%B7_netgen_%C2%B7_ngspice_%C2%B7_KLayout-1f6feb?style=flat-square&labelColor=30363d)
+![sign-off](https://img.shields.io/badge/DRC_%C2%B7_LVS_%C2%B7_antenna-clean-238636?style=flat-square&labelColor=30363d)
+![Silicluster](https://img.shields.io/badge/Silicluster_v3-ready_%C2%B7_due_31_Oct_2026-9e6a03?style=flat-square&labelColor=30363d)
 
 <img src="docs/img/neuron.gif" alt="Animation: as the input x sweeps, the signal current grows, the knee current stays fixed, and output current flows only once the signal exceeds the knee" width="100%">
 
-<sub>As x sweeps 0.3 → 1.2 V, the signal current bundle grows (each strand ≈ 0.5 µA), the knee bundle stays fixed,
-and output current flows only once the signal exceeds the knee — the ReLU. Right: the post-layout transfer curve.</sub>
+<sub>Each strand carries ≈ 0.5 µA. The signal current grows with x, the knee current stays fixed, and the output
+carries only the excess. That excess is the ReLU. The plot on the right is the post-layout transfer curve.</sub>
+
+<table>
+<tr>
+<td align="center" width="25%"><h3>≤ 0.71 %</h3>MAC linearity<br><sub>INL · spec ≤ 5 %</sub></td>
+<td align="center" width="25%"><h3>1.47 %</h3>weight mismatch σ<br><sub>200-run Monte Carlo · spec &lt; 2–3 %</sub></td>
+<td align="center" width="25%"><h3>≥ 62.5°</h3>phase margin<br><sub>every loop · spec ≥ 60°</sub></td>
+<td align="center" width="25%"><h3>≤ 78 µW</h3>total power<br><sub>98 µW with resistors −20 %</sub></td>
+</tr>
+</table>
+
+<sub>Post-layout results over 45 PVT points: tt/ff/ss/sf/fs × −40/27/125 °C × 1.62/1.8/1.98 V.</sub>
 
 </div>
 
-## Theory of operation
+## How it works
 
 <img src="docs/img/block-diagram.png" alt="Current topology of the neuron: signal and knee paths summed at Σ, then ReLU and R_out" width="100%">
 
-The circuit implements one artificial neuron, $y = f(w\,x + b)$ with a ReLU activation $f(u) = \max(0, u)$,
-fixed weight $w = 2$ and a bias set by a knee voltage $V_k$:
+The circuit is one artificial neuron, $y = f(w\,x + b)$. The activation is a ReLU, the weight is fixed at
+$w = 2$, and the bias comes from a knee voltage $V_k$:
 
 ```math
 y \;=\; 2\cdot\max\!\left(0,\; x - V_k\right) \qquad\Longleftrightarrow\qquad w = 2,\quad b = -2V_k
 ```
 
-Everything is done in the **current domain**: voltages are converted to currents, currents are scaled by
-mirrors, added and subtracted by Kirchhoff's current law at a single node, rectified, and converted back to a
-voltage by a resistor.
+All of the arithmetic happens in the current domain. Each voltage becomes a current. Mirrors scale the currents,
+Kirchhoff's current law adds and subtracts them at one node, a diode rectifies the result, and a resistor turns
+it back into a voltage.
 
-### 1. Ratiometric references
-
-A resistor divider from VDD (xhigh_po unit resistors, ratio $R_a : R_b : R_c = 9:4:3$) produces two
-references. The knee converter's input resistor $R_k$ (7 units) also draws current from $V_k$, so solving the
-divider with that load:
+**① Ratiometric references.** A divider from VDD built from xhigh_po unit resistors
+($R_a : R_b : R_c = 9:4:3$) sets two references. Including the load of the knee converter's input resistor gives
 
 ```math
-V_{REF} = \frac{21}{148}\,V_{DD} \approx 0.142\,V_{DD}, \qquad V_k = \frac{49}{148}\,V_{DD} \approx 0.331\,V_{DD}
+V_{REF} = \tfrac{21}{148}\,V_{DD} \approx 0.142\,V_{DD}, \qquad V_k = \tfrac{49}{148}\,V_{DD} \approx 0.331\,V_{DD}
 ```
 
-Both are pure resistor ratios: they do not move with temperature or process, only with the supply.
-At 1.8 V: $V_{REF} \approx 0.256$ V and $V_k \approx 0.596$ V.
+These are pure resistor ratios, so they track the supply but not temperature or process.
 
-### 2. Voltage-to-current converters
-
-Each converter is an OTA that holds one end of a resistor at $V_{REF}$ (a virtual ground) by driving the
-gate of an NMOS transistor $M_F$ that sinks the resistor current. With the input applied to the other end:
+**② Voltage to current.** An OTA holds one end of a resistor at $V_{REF}$ by driving an NMOS $M_F$ that sinks the
+resistor's current:
 
 ```math
 I_x = \frac{x - V_{REF}}{R_{in}}, \qquad I_k = \frac{V_k - V_{REF}}{R_{in}} \qquad (R_k = R_{in} \approx 304\ \text{k}\Omega)
 ```
 
-$M_F$ also carries a small constant current $I_0 \approx I_{ref}/2$ from a PMOS source, so it never drops into
-deep subthreshold when $I_x \to 0$ (which would collapse the loop gain). The OTA uses a **PMOS input pair**
-because its inputs sit at $V_{REF} \approx 0.26$ V; an NMOS pair would need a common mode above
-$V_{GS,n} + V_{DS,sat} \approx 0.75$ V. With 58–67 dB of loop gain the virtual ground stays within 1 mV of $V_{REF}$.
+The OTA has a PMOS input pair because its inputs sit at about 0.26 V. A small current $I_0 \approx I_{ref}/2$
+keeps $M_F$ out of deep subthreshold when $I_x \to 0$.
 
-### 3. Weight and summation
-
-Two copies of each $M_F$ (current-mirror ratio **2**) produce $2(I_x + I_0)$ and $2(I_k + I_0)$. The knee
-current is turned around by a PMOS mirror so that it is *sourced* into the summing node S, while the signal
-current is *sunk* from it. Kirchhoff's current law at S:
+**③ Weight and sum.** Mirrors with a ratio of 2 copy each $M_F$. A PMOS mirror turns the knee copy around, so the
+knee current is sourced into node S while the signal current is sunk from it:
 
 ```math
-I_S = 2\,(I_x + I_0) - 2\,(I_k + I_0) = 2\,(I_x - I_k) = \frac{2\,(x - V_k)}{R_{in}}
+I_S = 2\,(I_x + I_0) - 2\,(I_k + I_0) = \frac{2\,(x - V_k)}{R_{in}}
 ```
 
-$V_{REF}$ and $I_0$ appear in both paths and cancel exactly; only device mismatch remains.
+$V_{REF}$ and $I_0$ appear in both paths, so they cancel exactly.
 
-### 4. ReLU
+**④ ReLU.** A diode-connected PMOS supplies $I_S$. A diode can only source current, so it turns off whenever the
+signal current is smaller than the knee current, which gives $I_{out} = \max(0, I_S)$. The activation function
+comes from the physics of a single transistor, with no comparator.
 
-The current $I_S$ is supplied by a diode-connected PMOS. A diode can only *source* current, so when the
-signal current is smaller than the knee current the diode turns off and the excess is zero:
-
-```math
-I_{out} = \max\!\left(0,\; I_S\right)
-```
-
-This is the activation function — obtained from the physics of one transistor, with no comparator or
-extra bias.
-
-### 5. Current-to-voltage output
-
-A second PMOS copies $I_{out}$ into $R_{out}$ (7 units, the same as $R_{in}$):
+**⑤ Back to voltage.** A second PMOS copies $I_{out}$ into $R_{out}$, which uses the same 7 resistor units as
+$R_{in}$:
 
 ```math
 y = R_{out}\,I_{out} = 2\,\frac{R_{out}}{R_{in}}\,\max(0,\; x - V_k) = 2\cdot\max(0,\; x - V_k)
 ```
 
-At $x = 1.2$ V: $I_x \approx 3.1\ \mu$A, $I_k \approx 1.1\ \mu$A, $I_{out} \approx 4.0\ \mu$A, $y \approx 1.2$ V.
+### Design margins
 
-### 6. Why it holds across process, temperature and supply
+<details>
+<summary><b>Why it holds across process, temperature and supply</b></summary>
 
 | Quantity | Set by | Cancels |
 |---|---|---|
-| Weight $w$ | $2 \cdot R_{out}/R_{in}$ | sheet resistance and its temperature coefficient (same material, same units), transistor threshold (ratio of identical mirrors) |
+| Weight $w$ | $2 \cdot R_{out}/R_{in}$ | sheet resistance and its temperature coefficient, transistor threshold |
 | Knee $V_k$ | $\tfrac{49}{148}V_{DD}$ | sheet resistance, temperature, process |
-| $V_{REF}$, $I_0$, bias current | divider, bias reference | appear in both paths, subtracted at S |
+| $V_{REF}$, $I_0$, bias | divider, bias reference | appear in both paths and subtract at S |
 
-The absolute currents do change (roughly 2× from −40 °C to 125 °C), but they never set the transfer
-function. Measured over all 45 PVT points: slope 1.90–2.00, knee $0.326\,V_{DD}$ (the small offset from
-$0.331\,V_{DD}$ comes from the fitted-line knee definition and the slightly sub-2 slope).
+The absolute currents change by about 2× between −40 °C and 125 °C, but they never set the transfer function.
+Across all 45 PVT points the slope stays between 1.90 and 2.00 and the knee stays at $0.326\,V_{DD}$.
 
-### 7. Bias reference
+</details>
 
-A **β-multiplier** (constant-$g_m$) reference: transistor $M_2$ is $K = 4$ times wider than $M_1$ and has a
-source resistor $R_1$; a PMOS mirror forces equal currents in both branches. In weak/moderate inversion
-$V_{GS1} = V_{GS2} + I R_1$ gives
+<details>
+<summary><b>Bias reference</b>: β-multiplier with start-up</summary>
+
+$M_2$ is $K = 4$ times wider than $M_1$ and has a source resistor $R_1$. A PMOS mirror forces the same current
+through both branches, so $V_{GS1} = V_{GS2} + I R_1$ and
 
 ```math
 I_{ref} \approx \frac{n\,U_T \ln K}{R_1}, \qquad U_T = \frac{kT}{q}
 ```
 
-about 2 µA at 27 °C ($n \approx 1.3$, $R_1 \approx 24$ kΩ). The current is PTAT/R, so it rises with
-temperature (1.4 → 3.1 µA from −40 to 125 °C) — acceptable because it only biases the OTAs and $I_0$. The
-circuit also has a stable zero-current state; a start-up branch injects current into the NMOS gate line until
-the loop is running, then switches itself fully off.
+This gives about 2 µA at 27 °C ($n \approx 1.3$, $R_1 \approx 24$ kΩ). The circuit can also rest in a stable
+zero-current state, so a start-up branch injects current until the loop runs and then turns itself off.
+Measured start-up time is 3 µs or less.
 
-### 8. Accuracy
+</details>
 
-- **Mismatch.** Current-mirror error follows Pelgrom's law,
-  $\sigma(\Delta I/I) \approx (g_m/I_D)\cdot A_{VT}/\sqrt{W L}$: quadrupling the mirror gate area (16/4 µm)
-  halved the weight spread, $\sigma$ 2.81 % → **1.47 %** (200-run Monte Carlo). Resistors are interdigitated unit
-  segments with dummy ends, so $R_{out}/R_{in}$ matches to well under 1 %.
-- **Linearity.** INL is the worst deviation from the straight line through $(V_k + 0.1\ \text{V})$ and 1.2 V,
-  as a percentage of full scale: **≤ 0.71 %** after layout (target 5 %). Within 0.1 V of the knee the curvature
-  belongs to the activation, not to the multiply-accumulate.
-- **Systematic slope.** The output PMOS sees less drain voltage than the diode when $y$ is high, so the slope is
-  1–5 % below 2 (largest at 1.62 V and −40 °C).
+<details>
+<summary><b>Accuracy</b>: mismatch, linearity, systematic slope</summary>
 
-### 9. Stability
+- **Mismatch.** Mirror error follows Pelgrom's law, $\sigma(\Delta I/I) \approx (g_m/I_D)\cdot A_{VT}/\sqrt{W L}$.
+  Making the mirror gates 4× larger (16/4 µm) cut the weight σ from 2.81 % to 1.47 %. The resistors are
+  interdigitated unit segments, so $R_{out}/R_{in}$ matches to well under 1 %.
+- **Linearity.** INL is the worst deviation from the line through $(V_k + 0.1\ \text{V})$ and 1.2 V, given as a
+  percentage of full scale.
+- **Systematic slope.** When $y$ is high, the output PMOS has less drain voltage than the diode. This holds the
+  slope 1–5 % below 2.
 
-Each converter is a two-stage feedback loop (OTA → $M_F$ → resistor node → OTA), compensated by a Miller
-capacitor $C_c = 0.8$ pF with a nulling resistor $R_z \approx 72$ kΩ. Choosing $R_z > 1/g_{m,F}$ moves the
-right-half-plane zero of plain Miller compensation into the left half-plane, where it adds phase near crossover:
+</details>
+
+<details>
+<summary><b>Stability</b>: Miller compensation with a nulling resistor</summary>
+
+Each converter is a two-stage loop compensated by $C_c = 0.8$ pF. Choosing $R_z \approx 72$ kΩ, larger than
+$1/g_{m,F}$, moves the Miller zero into the left half-plane, where it adds phase:
 
 ```math
 f_z = \frac{1}{2\pi\,C_c\,\left(1/g_{m,F} - R_z\right)}
 ```
 
-The knee converter has a second, positive feedback path: its current loads the divider, which moves $V_{REF}$
-— the OTA's *other* input (about 15 % of the main path). Its stability is therefore measured by Middlebrook
-double injection at the OTA output, which opens every path at once. Post-layout phase margin: **≥ 62.5°** (signal
-loop) and **≥ 85.7°** (knee loop) at all 45 PVT points.
-
-### 10. Output loading
-
-$Y$ is the unbuffered resistor node, so its source impedance is $\approx R_{out}$. A load $R_L$ divides the output:
-
-```math
-y_{\text{loaded}} = y\,\frac{R_L}{R_L + R_{out}}
-```
-
-10 MΩ costs ≈ 2.8 % of gain and 1 MΩ ≈ 22 %; linearity is unaffected. Read $Y$ with a high-impedance input.
-
-Full derivations and design decisions: [architecture (ADR-001)](docs/ADR-001-neuron-architecture.md) ·
-[neuron core](docs/neuron-core.md) · [bias reference](docs/bias-reference.md).
-
-## Results
-
-<div align="center">
-<img src="docs/img/transfer.png" alt="Post-layout transfer function at −40, 27 and 125 °C" width="80%">
-</div>
-
-Post-layout (extracted devices and parasitic capacitance), 5 process corners × −40 / 27 / 125 °C × 1.62 / 1.8 / 1.98 V.
-
-| | Result | Spec |
-|---|---|---|
-| MAC linearity (INL) | **≤ 0.71 %** | ≤ 5 % ✅ |
-| Weight accuracy σ (200-run Monte Carlo) | **1.47 %** | < 2–3 % ✅ |
-| Weight (slope) | 1.90 – 2.00 | 2 |
-| Total power | **37.5 – 78.0 µW** | < 100 µW ✅ |
-| Loop phase margin (signal / knee loop) | **≥ 62.5° / ≥ 85.7°** | ≥ 60° ✅ |
-| Bias current (incl. ±20 % resistor spread) | 1.13 – 3.89 µA | 1 – 5 µA ✅ |
-| Area | 180 × 115 µm | 180 × 115 µm ✅ |
-
-Layout parasitics move every result by less than 0.1 % from the schematic.
-
-## Verification
-
-| Check | Tool | Result |
-|---|---|---|
-| DRC, every cell | Magic, sky130A `drc(full)` | 0 violations |
-| DRC of the GDS, manufacturing rules | KLayout, PDK `sky130A_mr.drc` (FEOL + BEOL + off-grid) | 0 violations |
-| DRC of the GDS read back | Magic `drc(full)` after `gds read` | 0 violations |
-| LVS, every cell and the GDS itself | netgen + `sky130A_setup.tcl` | unique match, 0 property errors |
-| Antenna | Magic `antennacheck` | no violations |
-| Pin labels / zero-area shapes | KLayout PDK decks | 0 / 0 |
-| GDS ↔ .mag | layer-by-layer XOR of a regenerated GDS | identical |
-
-Evidence: [`verif/drc/`](verif/drc) · [`verif/lvs/`](verif/lvs) · [`verif/crossverify/SUMMARY.md`](verif/crossverify/SUMMARY.md) ·
-[validation report (PDF)](submit/analog_neuron_validation.pdf)
-
-## Pins
-
-| Pin | Layer | Location (µm) | Notes |
-|---|---|---|---|
-| `X` | metal3 | right edge, y = 81.27 | input, 0.3 – 1.2 V, ≈ 300 kΩ |
-| `Y` | metal3 | right edge, y = 82.07 | output, unbuffered ≈ 300 kΩ: measure with ≥ 10 MΩ |
-| `VDD` | metal5 | top rail | 1.8 V |
-| `VSS` | metal5 | bottom rail | ground |
-
-Power grid: metal4 vertical straps, metal5 horizontal rails. Interface: [`submit/analog_neuron.v`](submit/analog_neuron.v).
-
-## Submission package
-
-`python3 scripts/make_submission.py` builds `submit/analog_neuron_silicluster_v3.zip` with every item the
-Silicluster v3 call (§10) asks for:
-
-| Required | Included |
-|---|---|
-| GDS of the final layout | `analog_neuron.gds` |
-| Magic .mag | top cell + the 17 cells it uses |
-| Verilog interface | [`analog_neuron.v`](submit/analog_neuron.v) |
-| Testbench and reproduction files | netlists, testbenches, `sim.py`, extracted netlists |
-| Simulation and validation document | [`analog_neuron_validation.pdf`](submit/analog_neuron_validation.pdf) |
-| DRC / LVS evidence | logs for every cell plus the GDS cross-verification |
-
-<details>
-<summary><b>Repository layout</b></summary>
-
-```
-spice/      netlists and testbenches   (bias/ · neuron/ · lvs/ · smoke/ · char/)
-scripts/    sim.py (PVT / Monte Carlo runner) · layout/ (layout generator) · DRC / LVS / PEX / GDS ·
-            validation_report.py · make_submission.py
-mag/        Magic layout, generated by scripts/layout/
-gds/        analog_neuron.gds
-verif/      DRC and LVS logs, GDS cross-verification, simulation evidence
-docs/       design notes, sign-offs, images
-submit/     Verilog interface, validation report, submission README
-```
+The knee loop has a second feedback path through the divider. For that reason it is measured with Middlebrook
+double injection at the OTA output. The signal loop has at least 62.5° of phase margin and the knee loop has at
+least 85.7°.
 
 </details>
 
+## Silicon
+
+<img src="docs/img/layout.png" alt="Layout of analog_neuron, 180 × 115 µm, with the main blocks labelled" width="100%">
+
+| Pin | Layer · location (µm) | Signal |
+|---|---|---|
+| `X` | metal3 · right edge, y = 81.27 | input, 0.3 – 1.2 V |
+| `Y` | metal3 · right edge, y = 82.07 | output, 0 – 1.2 V |
+| `VDD` | metal5 · top rail | 1.8 V |
+| `VSS` | metal5 · bottom rail | ground |
+
+The cell is 180 × 115 µm, with metal4 straps running vertically and metal5 rails running horizontally. The
+interface is defined in [`analog_neuron.v`](submit/analog_neuron.v).
+
+> [!IMPORTANT]
+> `Y` is unbuffered, a ≈ 300 kΩ source, so read it with a high-impedance input. A 10 MΩ load lowers the gain
+> by 2.8 % and a 1 MΩ load lowers it by 22 %. Linearity is unaffected.
+
+## Sign-off
+
+| Check | Tool | Result |
+|---|---|---|
+| DRC, every cell and the GDS read back | Magic `drc(full)` | ✅ 0 |
+| DRC, manufacturing rules (FEOL, BEOL, off-grid) | KLayout `sky130A_mr.drc` | ✅ 0 |
+| LVS, every cell and the GDS | netgen `sky130A_setup.tcl` | ✅ unique match, 0 property errors |
+| Antenna | Magic `antennacheck` | ✅ 0 |
+| Pin labels, zero-area shapes | KLayout PDK decks | ✅ 0 · 0 |
+| GDS ↔ .mag | layer-by-layer XOR | ✅ identical |
+
+Evidence is in [`verif/`](verif), summarised in [`SUMMARY.md`](verif/crossverify/SUMMARY.md) and the
+[validation report](submit/analog_neuron_validation.pdf). `python3 scripts/make_submission.py` builds the
+Silicluster v3 package containing every item §10 of the call asks for ([contents](submit/README.md)).
+
 <details>
-<summary><b>Reproduce everything</b> — simulation, layout, verification, report</summary>
+<summary><b>Reproduce everything</b></summary>
 
 Requires Magic, netgen, ngspice, KLayout and the SKY130A PDK (`PDK_ROOT=$HOME/.ciel`, `PDK=sky130A`).
 
@@ -288,9 +204,14 @@ python3 scripts/make_submission.py
 
 </details>
 
-<sub>Tools: Magic 8.3.683 · netgen 1.5.324 · ngspice 47 · KLayout 0.30 · SKY130A via ciel.
-Details: <a href="docs/ADR-001-neuron-architecture.md">architecture</a> ·
-<a href="docs/neuron-core.md">design notes</a> · <a href="docs/layout.md">layout</a> ·
-<a href="docs/gate-A.md">schematic sign-off</a> · <a href="docs/gate-B.md">layout sign-off</a> ·
-<a href="verif/crossverify/SUMMARY.md">GDS cross-verification</a> ·
-<a href="submit/analog_neuron_validation.pdf">validation report</a></sub>
+---
+
+<div align="center"><sub>
+<a href="docs/ADR-001-neuron-architecture.md">architecture</a> ·
+<a href="docs/neuron-core.md">neuron core</a> ·
+<a href="docs/bias-reference.md">bias reference</a> ·
+<a href="docs/layout.md">layout</a> ·
+<a href="docs/gate-A.md">schematic sign-off</a> ·
+<a href="docs/gate-B.md">layout sign-off</a>
+<br>Magic 8.3.683 · netgen 1.5.324 · ngspice 47 · KLayout 0.30 · SKY130A via ciel
+</sub></div>
