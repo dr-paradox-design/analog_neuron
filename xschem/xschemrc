@@ -1,0 +1,3 @@
+# open with:  cd xschem && xschem neuron_core.sch   (PDK_ROOT must point at the ciel install)
+source $env(PDK_ROOT)/sky130A/libs.tech/xschem/xschemrc
+append XSCHEM_LIBRARY_PATH :[file dirname [file normalize [info script]]]
