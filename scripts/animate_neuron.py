@@ -51,10 +51,12 @@ def bundle(ax, pts, n, color, phase, taper=(1, 1), reverse=False):
     g /= np.linalg.norm(g, axis=1, keepdims=True)
     nrm = np.stack([-g[:, 1], g[:, 0]], axis=1)
     s = np.linspace(*taper, len(p))[:, None]
+    # a growing dash offset moves the dashes toward the start of the path, so flow forward = shrinking offset
+    off = phase if reverse else (3.8 - phase) % 3.8
     for k in range(n):
         q = p + nrm * (k - (n - 1) / 2) * PITCH * s
         ax.plot(q[:, 0], q[:, 1], color=color, lw=1.1, alpha=0.95,
-                ls=(-phase if reverse else phase, (2.2, 1.6)), solid_capstyle="butt", zorder=3)
+                ls=(off, (2.2, 1.6)), solid_capstyle="butt", zorder=3)
 
 
 def box(ax, x1, x2, y, label, h=7):
