@@ -142,6 +142,34 @@ least 85.7°.
 
 </details>
 
+## Schematics
+
+<img src="docs/img/xschem_neuron_core.png" alt="xschem schematic of neuron_core: bias reference, 9:4:3 divider, two V-to-I converters, x2 weight mirrors, knee flip, ReLU diode, output copy and R_out" width="100%">
+
+<sub>`neuron_core` in xschem, using the SKY130 device symbols. The schematics live in [`xschem/`](xschem). xschem
+netlists each one and netgen compares the result with the SPICE netlists, which remain the design source. All
+four cells match uniquely, with no property errors ([logs](verif/lvs/schematic)).</sub>
+
+<details>
+<summary><b>Sub-cells</b>: V→I converter, OTA, bias reference</summary>
+
+<br>
+
+**V→I converter** (`vi_conv`): the OTA holds node X at V<sub>REF</sub> through M<sub>F</sub>, I<sub>0</sub> keeps
+M<sub>F</sub> biased, and C<sub>c</sub> with R<sub>z</sub> compensates the loop.
+
+<img src="docs/img/xschem_vi_conv.png" alt="xschem schematic of the V-to-I converter" width="100%">
+
+**OTA** (`ota5p`): five-transistor OTA with a PMOS input pair in its own well, tied to the tail node T.
+
+<img src="docs/img/xschem_ota5p.png" alt="xschem schematic of the 5-transistor OTA" width="100%">
+
+**Bias reference** (`bias_ref`): β-multiplier with K = 4 and R<sub>1</sub>, plus its start-up branch.
+
+<img src="docs/img/xschem_bias_ref.png" alt="xschem schematic of the beta-multiplier bias reference with start-up" width="100%">
+
+</details>
+
 ## Silicon
 
 <img src="docs/img/layout.png" alt="Layout of analog_neuron, 180 × 115 µm, with the main blocks labelled" width="100%">
@@ -167,6 +195,7 @@ interface is defined in [`analog_neuron.v`](submit/analog_neuron.v).
 | DRC, every cell and the GDS read back | Magic `drc(full)` | ✅ 0 |
 | DRC, manufacturing rules (FEOL, BEOL, off-grid) | KLayout `sky130A_mr.drc` | ✅ 0 |
 | LVS, every cell and the GDS | netgen `sky130A_setup.tcl` | ✅ unique match, 0 property errors |
+| Schematic ↔ SPICE netlist, every cell | xschem netlist + netgen | ✅ unique match, 0 property errors |
 | Antenna | Magic `antennacheck` | ✅ 0 |
 | Pin labels, zero-area shapes | KLayout PDK decks | ✅ 0 · 0 |
 | GDS ↔ .mag | layer-by-layer XOR | ✅ identical |
@@ -186,6 +215,9 @@ python3 scripts/sim.py spice/neuron/neuron_tb.cir --pvt --jobs 12
 python3 scripts/sim.py spice/neuron/neuron_tb.cir --mc 200 --corner tt_mm --jobs 12
 python3 scripts/sim.py spice/neuron/neuron_pex_tb.cir --pvt --jobs 12
 python3 scripts/sim.py spice/neuron/neuron_pex_mb_tb.cir --pvt --jobs 12
+
+# schematics: write xschem/*.sch, LVS them against the netlists, screenshot them
+python3 scripts/schematics.py --check --export
 
 # generate the layout and the GDS
 for b in ota5p bias_ref neuron_core top; do python3 scripts/layout/$b.py; done

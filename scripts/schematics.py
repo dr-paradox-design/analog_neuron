@@ -7,11 +7,10 @@ are the same circuit (xschem netlist vs spice/lvs/<cell>_ref.spice, netgen).
 
   python3 scripts/schematics.py             write the .sch / .sym files
   python3 scripts/schematics.py --check     ... then netlist each with xschem and LVS it (verif/lvs/schematic/)
-  python3 scripts/schematics.py --export    ... then export SVGs and restyle them into docs/img/sch_<cell>.svg
+  python3 scripts/schematics.py --export    ... then screenshot each with xschem into docs/img/xschem_<cell>.png
 """
 import os
 import pathlib
-import re
 import subprocess
 import sys
 
@@ -66,9 +65,9 @@ class Sch:
         return self.place(SYM["res1p41" if wide else "res"], "res", x, y,
                           f"name={name} L={l} model={model} spiceprefix=X mult=1", rot, flip)
 
-    def cap(self, name, x, y, w, l, rot=0):
+    def cap(self, name, x, y, w, l, rot=0, flip=0):
         return self.place(SYM["cap"], "cap", x, y, f"name={name} model=cap_mim_m3_1 W={w} L={l} MF=1 spiceprefix=X",
-                          rot)
+                          rot, flip)
 
     def label(self, x, y, net, kind="lab_pin", flip=0, rot=0):
         n = sum(1 for i in self.items if i.startswith("C {")) + 1
@@ -112,7 +111,7 @@ def symbols():
                 ("OUT", "out", 60, 0, (40, 0)), ("VP", "in", -20, 60, (-20, 30)),
                 ("VDD", "inout", 0, -60, (0, -20)), ("VSS", "inout", 10, 60, (10, 15))],
                [(-40, -40, -40, 40), (-40, -40, 40, 0), (-40, 40, 40, 0)],
-               [("+", -36, -30, 0, 0.3), ("-", -35, 10, 0, 0.3), ("@name", 25, -45, 0, 0.2)])
+               [("+", -36, -30, 0, 0.3), ("-", -35, 10, 0, 0.3), ("@name", 20, 30, 0, 0.2)])
     box_symbol(XS / "vi_conv.sym",
                [("IN", "in", -80, -20, (-60, -20)), ("VREF", "in", -80, 20, (-60, 20)),
                 ("G", "out", 80, 0, (60, 0)), ("VP", "in", -20, -80, (-20, -60)),
@@ -177,10 +176,10 @@ def bias_ref():
     ms1a = s.fet("pfet", "XMS1A", 500, 200, 0.42, 40, "VDD")
     ms1b = s.fet("pfet", "XMS1B", 500, 290, 0.42, 40, "VDD")
     ms2 = s.fet("nfet", "XMS2", 500, 380, 16, 0.5, "VSS")
-    ms3 = s.fet("nfet", "XMS3", 100, 200, 1, 1, "VSS")
+    ms3 = s.fet("nfet", "XMS3", -20, 200, 1, 1, "VSS")
     # rails
-    s.wire((40, 140), (120, 140), (180, 140), (360, 140), (520, 140))
-    s.wire((40, 470), (180, 470), (360, 470), (520, 470))
+    s.wire((-100, 140), (0, 140), (180, 140), (360, 140), (520, 140))
+    s.wire((-100, 470), (180, 470), (360, 470), (520, 470))
     for p in (ms3["D"], m3["S"], m4["S"], ms1a["S"]):
         s.wire(p, (p[0], 140))
     for p in (m1["S"], r1["M"], ms2["S"]):
@@ -195,8 +194,8 @@ def bias_ref():
     s.wire((180, 265), (240, 265), (240, 330))
     s.wire(m1["G"], (240, 330), m2["G"])
     s.wire(m2["S"], r1["P"])
-    s.wire(ms3["S"], (120, 265), (180, 265))
-    s.wire((120, 265), (60, 265))
+    s.wire(ms3["S"], (0, 265), (180, 265))
+    s.wire((0, 265), (-80, 265))
     # start-up
     s.wire(ms1a["D"], ms1b["S"])
     s.wire(ms1b["D"], (520, 335), ms2["D"])
@@ -208,33 +207,33 @@ def bias_ref():
     s.label(*ms3["G"], "ST")
     s.label(570, 335, "ST", flip=1)
     s.label(420, 260, "VP", "opin")
-    s.label(60, 265, "VN", "opin", flip=1)
-    s.label(40, 140, "VDD", "iopin", flip=1)
-    s.label(40, 470, "VSS", "iopin", flip=1)
-    s.text("start-up", 470, 420, 0.25, layer=8)
+    s.label(-80, 265, "VN", "opin", flip=1)
+    s.label(-100, 140, "VDD", "iopin", flip=1)
+    s.label(-100, 470, "VSS", "iopin", flip=1)
+    s.text("start-up", 532, 405, 0.25, layer=8)
     s.write(XS / "bias_ref.sch")
 
 
 def vi_conv():
     s = Sch()
-    i0 = s.fet("pfet", "XI0", 260, 120, 16, 4, "VDD")
-    mf = s.fet("nfet", "XMF", 260, 330, 16, 4, "VSS")
+    i0 = s.fet("pfet", "XI0", 400, 120, 16, 4, "VDD")
+    mf = s.fet("nfet", "XMF", 400, 330, 16, 4, "VSS")
     r = s.res("XR", 130, 200, 103.53, rot=3)
-    cc = s.cap("XCC", 225, 230, 20, 20, rot=2)
-    rz = s.res("XRZ", 225, 300, 25, rot=2, flip=1)
+    cc = s.cap("XCC", 250, 230, 20, 20, rot=2, flip=1)
+    rz = s.res("XRZ", 250, 300, 25, rot=2, flip=1)
     a = s.inst("ota5p", "XA", 150, 330, OTA_PINS)
-    s.wire((40, 60), (280, 60))
-    s.wire(i0["S"], (280, 60))
+    s.wire((40, 60), (420, 60))
+    s.wire(i0["S"], (420, 60))
     s.wire((40, 200), r["P"])
-    s.wire(r["M"], (180, 200), (225, 200), (280, 200))
-    s.wire(i0["D"], (280, 200), mf["D"])
+    s.wire(r["M"], (180, 200), (250, 200), (420, 200))
+    s.wire(i0["D"], (420, 200), mf["D"])
     s.wire(cc["c0"], rz["M"])
-    s.wire(a["OUT"], (225, 330), mf["G"])
-    s.wire((225, 330), (225, 380))
+    s.wire(a["OUT"], (250, 330), mf["G"])
+    s.wire((250, 330), (250, 380))
     s.wire((180, 200), (180, 240), (70, 240), (70, 310), a["INP"])
     s.wire((40, 350), a["INN"])
-    s.wire((180, 120), i0["G"])
-    s.wire(mf["S"], (280, 420), (160, 420), (40, 420))
+    s.wire((230, 120), i0["G"])
+    s.wire(mf["S"], (420, 420), (160, 420), (40, 420))
     s.wire(a["VSS"], (160, 420))
     s.label(*a["VDD"], "VDD")
     s.label(*a["VP"], "VP")
@@ -242,11 +241,11 @@ def vi_conv():
     s.label(*rz["B"], "VSS")
     s.label(40, 200, "IN", "ipin")
     s.label(40, 350, "VREF", "ipin")
-    s.label(180, 120, "VP", "ipin")
-    s.label(225, 380, "G", "opin")
+    s.label(230, 120, "VP", "ipin")
+    s.label(250, 380, "G", "opin")
     s.label(40, 60, "VDD", "iopin", flip=1)
     s.label(40, 420, "VSS", "iopin", flip=1)
-    s.label(280, 200, "X", "lab_wire")
+    s.label(420, 200, "X", "lab_wire")
     s.write(XS / "vi_conv.sch")
 
 
@@ -286,18 +285,18 @@ def neuron_core():
         s.wire(v["G"], (500, y))
         s.label(500, y, g, flip=1)
     # current-mode core: rails
-    xs = (620, 760, 880, 1020)
+    xs = (620, 760, 960, 1100)
     s.wire((560, 60), *[(x, 60) for x in xs])
-    s.wire((560, 560), *[(x, 560) for x in (620, 760, 1020)])
+    s.wire((560, 560), *[(x, 560) for x in (620, 760, 1100)])
     s.label(560, 60, "VDD", "iopin", flip=1)
     s.label(560, 560, "VSS", "iopin", flip=1)
     pk1 = s.fet("pfet", "XPK1", 640, 130, 32, 4, "VDD", flip=1)
     pk2 = s.fet("pfet", "XPK2", 740, 130, 32, 4, "VDD")
     wk = s.fet("nfet", "XWK", 600, 480, 16, 4, "VSS", m=2)
     ws = s.fet("nfet", "XWS", 740, 480, 16, 4, "VSS", m=2)
-    pr1 = s.fet("pfet", "XPR1", 900, 130, 32, 8, "VDD", flip=1)
-    pr2 = s.fet("pfet", "XPR2", 1000, 130, 32, 8, "VDD")
-    ro = s.res("XRO", 1020, 400, 103.53)
+    pr1 = s.fet("pfet", "XPR1", 980, 130, 32, 8, "VDD", flip=1)
+    pr2 = s.fet("pfet", "XPR2", 1080, 130, 32, 8, "VDD")
+    ro = s.res("XRO", 1100, 400, 103.53)
     for p in (pk1, pk2, pr1, pr2):
         s.wire(p["S"], (p["S"][0], 60))
     for p in (wk["S"], ws["S"], ro["M"]):
@@ -308,22 +307,22 @@ def neuron_core():
     s.wire(pk1["D"], (620, 190), wk["D"])
     # summing node S
     s.wire(pk2["D"], (760, 300), ws["D"])
-    s.wire((760, 300), (820, 300), (880, 300))
+    s.wire((760, 300), (860, 300), (960, 300))
     # ReLU diode and output copy
-    s.wire(pr1["G"], (950, 130), pr2["G"])
-    s.wire((950, 130), (950, 220), (880, 220))
-    s.wire(pr1["D"], (880, 220), (880, 300))
-    s.wire(pr2["D"], (1020, 300), ro["P"])
-    s.wire((1020, 300), (1080, 300))
-    s.label(1080, 300, "Y", "opin")
+    s.wire(pr1["G"], (1030, 130), pr2["G"])
+    s.wire((1030, 130), (1030, 220), (960, 220))
+    s.wire(pr1["D"], (960, 220), (960, 300))
+    s.wire(pr2["D"], (1100, 300), ro["P"])
+    s.wire((1100, 300), (1160, 300))
+    s.label(1160, 300, "Y", "opin")
     s.label(*ro["B"], "VSS")
     s.label(*wk["G"], "GK")
     s.label(*ws["G"], "GS")
-    s.label(820, 300, "S", "lab_wire")
+    s.label(860, 300, "S", "lab_wire")
     s.label(620, 190, "DK", "lab_wire")
     for t, x, y in (("divider 9:4:3", 170, 262), ("signal V->I", 250, 215), ("knee V->I", 262, 475),
                     ("knee flip", 655, 70), ("x2 weight mirrors", 630, 580),
-                    ("ReLU", 860, 70), ("R_out", 1040, 440)):
+                    ("ReLU", 1000, 70), ("R_out", 1120, 440)):
         s.text(t, x, y, 0.25, layer=8)
     s.write(XS / "neuron_core.sch")
 
@@ -387,82 +386,32 @@ def check():
     return ok
 
 
-# design tokens shared with the README images (docs/img/neuron.gif)
-BG, TEXT, MUTED, FAINT = "#0d1117", "#e6edf3", "#8b949e", "#30363d"
-WIRE, SYMB, PORT, SIZE, NOTE = "#58a6ff", "#c9d1d9", "#3fb950", "#e3b341", "#8b949e"
-
-
-def restyle(src, dst):
-    svg = src.read_text()
-    lw = float(re.search(r"stroke-width:\s*([\d.]+)", svg).group(1))
-    body = svg.split("</style>", 1)[1]
-    keep, xs, ys = [], [], []
-    for line in body.splitlines():
-        m = re.match(r'<path class="l(\d+)" d="([^"]+)"/>', line)
-        if m:
-            layer, d = int(m.group(1)), m.group(2)
-            nums = list(map(float, re.findall(r"-?[\d.]+", d)))
-            pts = list(zip(nums[0::2], nums[1::2]))
-            if layer == 5 and d.endswith("z") and len(pts) == 5:      # pin squares
-                continue
-            if layer not in (1, 4, 5):
-                continue
-            xs += [p[0] for p in pts]
-            ys += [p[1] for p in pts]
-            keep.append(line)
-            continue
-        m = re.match(r'<circle class="l(\d+)" cx="([-\d.]+)" cy="([-\d.]+)" r="([\d.]+)"', line)
-        if m and m.group(1) in ("1", "4"):
-            cx, cy, r = float(m.group(2)), float(m.group(3)), float(m.group(4))
-            if m.group(1) == "1":
-                keep.append(f'<circle cx="{cx}" cy="{cy}" r="{0.75 * r:.2f}" fill="{WIRE}"/>')
-            else:
-                keep.append(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{SYMB}" '
-                            f'stroke-width="{1.6 * lw:.2f}"/>')
-            continue
-        m = re.match(r'<text fill="(#[0-9a-f]+)".*font-size="([\d.]+)" transform="translate\(([-\d.]+), ([-\d.]+)\)" >(.*)</text>', line)
-        if m:
-            fill, size, x, y, s = m.group(1), float(m.group(2)), float(m.group(3)), float(m.group(4)), m.group(5)
-            if fill in ("#ff0000", "#ff7777", "#00ffcc") or s.startswith("nf=") or s.endswith("_01v8") \
-                    or s.startswith("sky130") or s.startswith("res_") or s.startswith("cap_") \
-                    or s.startswith("mult=") or s.strip() in ("", "@spice_get_voltage"):
-                continue
-            color = {"#cccccc": TEXT, "#aaaa00": SIZE, "#00ddff": WIRE, "#ffff00": NOTE}.get(fill, MUTED)
-            if fill == "#00ddff":                       # net labels: smaller, bold
-                size *= 0.62
-                line = line.replace(m.group(2), f"{size:.2f}", 1)
-                line = line.replace(f'fill="{fill}"', f'fill="{color}" font-weight="600"')
-            else:
-                line = line.replace(f'fill="{fill}"', f'fill="{color}"')
-            keep.append(line)
-            xs += [x, x + 0.6 * size * len(s)]
-            ys += [y - size, y + 0.3 * size]
-    pad = 4 * lw
-    x0, y0, x1, y1 = min(xs) - pad, min(ys) - pad, max(xs) + pad, max(ys) + pad
-    w, h = x1 - x0, y1 - y0
-    style = f"""<style>
-text {{ font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; }}
-.l1 {{ fill: none; stroke: {WIRE}; stroke-width: {2.2 * lw:.3f}; stroke-linecap: round; stroke-linejoin: round; }}
-.l4 {{ fill: {SYMB}; stroke: {SYMB}; stroke-width: {1.6 * lw:.3f}; stroke-linecap: round; stroke-linejoin: round; }}
-.l5 {{ fill: {PORT}; fill-opacity: 0.25; stroke: {PORT}; stroke-width: {1.6 * lw:.3f}; stroke-linejoin: round; }}
-</style>"""
-    out = keep
-    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x0:.1f} {y0:.1f} {w:.1f} {h:.1f}" '
-           f'width="{w:.0f}" height="{h:.0f}">\n{style}\n'
-           f'<rect x="{x0:.1f}" y="{y0:.1f}" width="{w:.1f}" height="{h:.1f}" rx="{3 * lw:.1f}" fill="{BG}"/>\n'
-           + "\n".join(out) + "\n</svg>\n")
-    dst.write_text(svg)
+# image size per cell (pixels); xschem zooms the whole schematic to fit, the margins are cropped afterwards
+SHOT = {"ota5p": (1500, 1300), "bias_ref": (2200, 1250), "vi_conv": (1600, 1300), "neuron_core": (2400, 1250)}
 
 
 def export():
+    """Screenshots from xschem itself (its own renderer and colours). xschem needs a window for PNG output,
+    so this briefly opens one per cell. The simulation back-annotation layers (15, 17: id, gm, vgs, vds)
+    are hidden because they only show '-' without a simulation."""
+    from PIL import Image, ImageOps
     out = ROOT / "build" / "xschem"
     out.mkdir(parents=True, exist_ok=True)
+    env = dict(os.environ, PDK_ROOT=os.environ.get("PDK_ROOT", str(pathlib.Path.home() / ".ciel")), PDK="sky130A")
     for cell in CELLS:
-        raw = out / f"{cell}_raw.svg"
+        raw = out / f"{cell}_raw.png"
         raw.unlink(missing_ok=True)
-        xschem(cell, f"xschem zoom_full\nxschem print svg {raw} 2400 1400", out)
-        restyle(raw, ROOT / "docs" / "img" / f"sch_{cell}.svg")
-        print("wrote", f"docs/img/sch_{cell}.svg")
+        w, h = SHOT[cell]
+        tcl = out / f"{cell}_png.tcl"
+        tcl.write_text("foreach l {15 17} { set enable_layer($l) 0 }\nxschem enable_layers\nxschem zoom_full\n"
+                       f"xschem print png {raw} {w} {h}\nxschem exit closewindow force\n")
+        subprocess.run(["timeout", "60", "xschem", "--rcfile", str(XS / "xschemrc"), "--script", str(tcl),
+                        str(XS / f"{cell}.sch")], cwd=XS, env=env, stdin=subprocess.DEVNULL, capture_output=True)
+        im = Image.open(raw).convert("RGB")
+        im = ImageOps.expand(im.crop(im.getbbox()), border=40, fill=(0, 0, 0))
+        dst = ROOT / "docs" / "img" / f"xschem_{cell}.png"
+        im.save(dst, optimize=True)
+        print("wrote", dst.relative_to(ROOT), im.size)
 
 
 if __name__ == "__main__":

@@ -44,27 +44,27 @@ N 480 430 500 430 {}
 C {lab_pin.sym} 500 430 0 1 {name=l29 lab=GK}
 N 560 60 620 60 {}
 N 620 60 760 60 {}
-N 760 60 880 60 {}
-N 880 60 1020 60 {}
+N 760 60 960 60 {}
+N 960 60 1100 60 {}
 N 560 560 620 560 {}
 N 620 560 760 560 {}
-N 760 560 1020 560 {}
+N 760 560 1100 560 {}
 C {iopin.sym} 560 60 0 1 {name=l30 lab=VDD}
 C {iopin.sym} 560 560 0 1 {name=l31 lab=VSS}
 C {sky130_fd_pr/pfet3_01v8.sym} 640 130 0 1 {name=XPK1 W=32 L=4 nf=1 mult=1 body=VDD model=pfet_01v8 spiceprefix=X}
 C {sky130_fd_pr/pfet3_01v8.sym} 740 130 0 0 {name=XPK2 W=32 L=4 nf=1 mult=1 body=VDD model=pfet_01v8 spiceprefix=X}
 C {sky130_fd_pr/nfet3_01v8.sym} 600 480 0 0 {name=XWK W=16 L=4 nf=1 mult=2 body=VSS model=nfet_01v8 spiceprefix=X}
 C {sky130_fd_pr/nfet3_01v8.sym} 740 480 0 0 {name=XWS W=16 L=4 nf=1 mult=2 body=VSS model=nfet_01v8 spiceprefix=X}
-C {sky130_fd_pr/pfet3_01v8.sym} 900 130 0 1 {name=XPR1 W=32 L=8 nf=1 mult=1 body=VDD model=pfet_01v8 spiceprefix=X}
-C {sky130_fd_pr/pfet3_01v8.sym} 1000 130 0 0 {name=XPR2 W=32 L=8 nf=1 mult=1 body=VDD model=pfet_01v8 spiceprefix=X}
-C {sky130_fd_pr/res_xhigh_po_0p69.sym} 1020 400 0 0 {name=XRO L=103.53 model=res_xhigh_po_0p69 spiceprefix=X mult=1}
+C {sky130_fd_pr/pfet3_01v8.sym} 980 130 0 1 {name=XPR1 W=32 L=8 nf=1 mult=1 body=VDD model=pfet_01v8 spiceprefix=X}
+C {sky130_fd_pr/pfet3_01v8.sym} 1080 130 0 0 {name=XPR2 W=32 L=8 nf=1 mult=1 body=VDD model=pfet_01v8 spiceprefix=X}
+C {sky130_fd_pr/res_xhigh_po_0p69.sym} 1100 400 0 0 {name=XRO L=103.53 model=res_xhigh_po_0p69 spiceprefix=X mult=1}
 N 620 100 620 60 {}
 N 760 100 760 60 {}
-N 880 100 880 60 {}
-N 1020 100 1020 60 {}
+N 960 100 960 60 {}
+N 1100 100 1100 60 {}
 N 620 510 620 560 {}
 N 760 510 760 560 {}
-N 1020 430 1020 560 {}
+N 1100 430 1100 560 {}
 N 660 130 690 130 {}
 N 690 130 720 130 {}
 N 690 130 690 190 {}
@@ -73,27 +73,27 @@ N 620 160 620 190 {}
 N 620 190 620 450 {}
 N 760 160 760 300 {}
 N 760 300 760 450 {}
-N 760 300 820 300 {}
-N 820 300 880 300 {}
-N 920 130 950 130 {}
-N 950 130 980 130 {}
-N 950 130 950 220 {}
-N 950 220 880 220 {}
-N 880 160 880 220 {}
-N 880 220 880 300 {}
-N 1020 160 1020 300 {}
-N 1020 300 1020 370 {}
-N 1020 300 1080 300 {}
-C {opin.sym} 1080 300 0 0 {name=l39 lab=Y}
-C {lab_pin.sym} 1000 400 0 0 {name=l40 lab=VSS}
+N 760 300 860 300 {}
+N 860 300 960 300 {}
+N 1000 130 1030 130 {}
+N 1030 130 1060 130 {}
+N 1030 130 1030 220 {}
+N 1030 220 960 220 {}
+N 960 160 960 220 {}
+N 960 220 960 300 {}
+N 1100 160 1100 300 {}
+N 1100 300 1100 370 {}
+N 1100 300 1160 300 {}
+C {opin.sym} 1160 300 0 0 {name=l39 lab=Y}
+C {lab_pin.sym} 1080 400 0 0 {name=l40 lab=VSS}
 C {lab_pin.sym} 580 480 0 0 {name=l41 lab=GK}
 C {lab_pin.sym} 720 480 0 0 {name=l42 lab=GS}
-C {lab_wire.sym} 820 300 0 0 {name=l43 lab=S}
+C {lab_wire.sym} 860 300 0 0 {name=l43 lab=S}
 C {lab_wire.sym} 620 190 0 0 {name=l44 lab=DK}
 T {divider 9:4:3} 170 262 0 0 0.25 0.25 {layer=8}
 T {signal V->I} 250 215 0 0 0.25 0.25 {layer=8}
 T {knee V->I} 262 475 0 0 0.25 0.25 {layer=8}
 T {knee flip} 655 70 0 0 0.25 0.25 {layer=8}
 T {x2 weight mirrors} 630 580 0 0 0.25 0.25 {layer=8}
-T {ReLU} 860 70 0 0 0.25 0.25 {layer=8}
-T {R_out} 1040 440 0 0 0.25 0.25 {layer=8}
+T {ReLU} 1000 70 0 0 0.25 0.25 {layer=8}
+T {R_out} 1120 440 0 0 0.25 0.25 {layer=8}
