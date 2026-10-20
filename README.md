@@ -28,16 +28,148 @@
 
 </div>
 
-## How it works
+## Theory of operation
 
 <img src="docs/img/block-diagram.png" alt="Current topology of the neuron: signal and knee paths summed at Σ, then ReLU and R_out" width="100%">
 
-- **Ratiometric gain.** The weight is 2 · R<sub>out</sub>/R<sub>in</sub>: one matched resistor ratio and one
-  mirror ratio, so it barely moves with process, temperature or supply.
-- **Knee replica.** A second, identical V→I converter turns the knee voltage into a current that is
-  subtracted at Σ. The shared internal reference cancels, leaving a knee set purely by a VDD ratio.
-- **ReLU for free.** The PMOS diode at Σ can only source current, so the output is exactly zero
-  until the signal current exceeds the knee current.
+The circuit implements one artificial neuron, $y = f(w\,x + b)$ with a ReLU activation $f(u) = \max(0, u)$,
+fixed weight $w = 2$ and a bias set by a knee voltage $V_k$:
+
+```math
+y \;=\; 2\cdot\max\!\left(0,\; x - V_k\right) \qquad\Longleftrightarrow\qquad w = 2,\quad b = -2V_k
+```
+
+Everything is done in the **current domain**: voltages are converted to currents, currents are scaled by
+mirrors, added and subtracted by Kirchhoff's current law at a single node, rectified, and converted back to a
+voltage by a resistor.
+
+### 1. Ratiometric references
+
+A resistor divider from VDD (xhigh_po unit resistors, ratio $R_a : R_b : R_c = 9:4:3$) produces two
+references. The knee converter's input resistor $R_k$ (7 units) also draws current from $V_k$, so solving the
+divider with that load:
+
+```math
+V_{REF} = \frac{21}{148}\,V_{DD} \approx 0.142\,V_{DD}, \qquad V_k = \frac{49}{148}\,V_{DD} \approx 0.331\,V_{DD}
+```
+
+Both are pure resistor ratios: they do not move with temperature or process, only with the supply.
+At 1.8 V: $V_{REF} \approx 0.256$ V and $V_k \approx 0.596$ V.
+
+### 2. Voltage-to-current converters
+
+Each converter is an OTA that holds one end of a resistor at $V_{REF}$ (a virtual ground) by driving the
+gate of an NMOS transistor $M_F$ that sinks the resistor current. With the input applied to the other end:
+
+```math
+I_x = \frac{x - V_{REF}}{R_{in}}, \qquad I_k = \frac{V_k - V_{REF}}{R_{in}} \qquad (R_k = R_{in} \approx 304\ \text{k}\Omega)
+```
+
+$M_F$ also carries a small constant current $I_0 \approx I_{ref}/2$ from a PMOS source, so it never drops into
+deep subthreshold when $I_x \to 0$ (which would collapse the loop gain). The OTA uses a **PMOS input pair**
+because its inputs sit at $V_{REF} \approx 0.26$ V; an NMOS pair would need a common mode above
+$V_{GS,n} + V_{DS,sat} \approx 0.75$ V. With 58–67 dB of loop gain the virtual ground stays within 1 mV of $V_{REF}$.
+
+### 3. Weight and summation
+
+Two copies of each $M_F$ (current-mirror ratio **2**) produce $2(I_x + I_0)$ and $2(I_k + I_0)$. The knee
+current is turned around by a PMOS mirror so that it is *sourced* into the summing node S, while the signal
+current is *sunk* from it. Kirchhoff's current law at S:
+
+```math
+I_S = 2\,(I_x + I_0) - 2\,(I_k + I_0) = 2\,(I_x - I_k) = \frac{2\,(x - V_k)}{R_{in}}
+```
+
+$V_{REF}$ and $I_0$ appear in both paths and cancel exactly; only device mismatch remains.
+
+### 4. ReLU
+
+The current $I_S$ is supplied by a diode-connected PMOS. A diode can only *source* current, so when the
+signal current is smaller than the knee current the diode turns off and the excess is zero:
+
+```math
+I_{out} = \max\!\left(0,\; I_S\right)
+```
+
+This is the activation function — obtained from the physics of one transistor, with no comparator or
+extra bias.
+
+### 5. Current-to-voltage output
+
+A second PMOS copies $I_{out}$ into $R_{out}$ (7 units, the same as $R_{in}$):
+
+```math
+y = R_{out}\,I_{out} = 2\,\frac{R_{out}}{R_{in}}\,\max(0,\; x - V_k) = 2\cdot\max(0,\; x - V_k)
+```
+
+At $x = 1.2$ V: $I_x \approx 3.1\ \mu$A, $I_k \approx 1.1\ \mu$A, $I_{out} \approx 4.0\ \mu$A, $y \approx 1.2$ V.
+
+### 6. Why it holds across process, temperature and supply
+
+| Quantity | Set by | Cancels |
+|---|---|---|
+| Weight $w$ | $2 \cdot R_{out}/R_{in}$ | sheet resistance and its temperature coefficient (same material, same units), transistor threshold (ratio of identical mirrors) |
+| Knee $V_k$ | $\tfrac{49}{148}V_{DD}$ | sheet resistance, temperature, process |
+| $V_{REF}$, $I_0$, bias current | divider, bias reference | appear in both paths, subtracted at S |
+
+The absolute currents do change (roughly 2× from −40 °C to 125 °C), but they never set the transfer
+function. Measured over all 45 PVT points: slope 1.90–2.00, knee $0.326\,V_{DD}$ (the small offset from
+$0.331\,V_{DD}$ comes from the fitted-line knee definition and the slightly sub-2 slope).
+
+### 7. Bias reference
+
+A **β-multiplier** (constant-$g_m$) reference: transistor $M_2$ is $K = 4$ times wider than $M_1$ and has a
+source resistor $R_1$; a PMOS mirror forces equal currents in both branches. In weak/moderate inversion
+$V_{GS1} = V_{GS2} + I R_1$ gives
+
+```math
+I_{ref} \approx \frac{n\,U_T \ln K}{R_1}, \qquad U_T = \frac{kT}{q}
+```
+
+about 2 µA at 27 °C ($n \approx 1.3$, $R_1 \approx 24$ kΩ). The current is PTAT/R, so it rises with
+temperature (1.4 → 3.1 µA from −40 to 125 °C) — acceptable because it only biases the OTAs and $I_0$. The
+circuit also has a stable zero-current state; a start-up branch injects current into the NMOS gate line until
+the loop is running, then switches itself fully off.
+
+### 8. Accuracy
+
+- **Mismatch.** Current-mirror error follows Pelgrom's law,
+  $\sigma(\Delta I/I) \approx (g_m/I_D)\cdot A_{VT}/\sqrt{W L}$: quadrupling the mirror gate area (16/4 µm)
+  halved the weight spread, $\sigma$ 2.81 % → **1.47 %** (200-run Monte Carlo). Resistors are interdigitated unit
+  segments with dummy ends, so $R_{out}/R_{in}$ matches to well under 1 %.
+- **Linearity.** INL is the worst deviation from the straight line through $(V_k + 0.1\ \text{V})$ and 1.2 V,
+  as a percentage of full scale: **≤ 0.71 %** after layout (target 5 %). Within 0.1 V of the knee the curvature
+  belongs to the activation, not to the multiply-accumulate.
+- **Systematic slope.** The output PMOS sees less drain voltage than the diode when $y$ is high, so the slope is
+  1–5 % below 2 (largest at 1.62 V and −40 °C).
+
+### 9. Stability
+
+Each converter is a two-stage feedback loop (OTA → $M_F$ → resistor node → OTA), compensated by a Miller
+capacitor $C_c = 0.8$ pF with a nulling resistor $R_z \approx 72$ kΩ. Choosing $R_z > 1/g_{m,F}$ moves the
+right-half-plane zero of plain Miller compensation into the left half-plane, where it adds phase near crossover:
+
+```math
+f_z = \frac{1}{2\pi\,C_c\,\left(1/g_{m,F} - R_z\right)}
+```
+
+The knee converter has a second, positive feedback path: its current loads the divider, which moves $V_{REF}$
+— the OTA's *other* input (about 15 % of the main path). Its stability is therefore measured by Middlebrook
+double injection at the OTA output, which opens every path at once. Post-layout phase margin: **≥ 62.5°** (signal
+loop) and **≥ 85.7°** (knee loop) at all 45 PVT points.
+
+### 10. Output loading
+
+$Y$ is the unbuffered resistor node, so its source impedance is $\approx R_{out}$. A load $R_L$ divides the output:
+
+```math
+y_{\text{loaded}} = y\,\frac{R_L}{R_L + R_{out}}
+```
+
+10 MΩ costs ≈ 2.8 % of gain and 1 MΩ ≈ 22 %; linearity is unaffected. Read $Y$ with a high-impedance input.
+
+Full derivations and design decisions: [architecture (ADR-001)](docs/ADR-001-neuron-architecture.md) ·
+[neuron core](docs/neuron-core.md) · [bias reference](docs/bias-reference.md).
 
 ## Results
 
