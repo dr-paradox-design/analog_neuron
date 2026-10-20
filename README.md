@@ -142,33 +142,15 @@ least 85.7°.
 
 </details>
 
-## Schematics
+## Schematic
 
-<img src="docs/img/xschem_neuron_core.png" alt="xschem schematic of neuron_core: bias reference, 9:4:3 divider, two V-to-I converters, x2 weight mirrors, knee flip, ReLU diode, output copy and R_out" width="100%">
+<a href="docs/img/xschem_analog_neuron.png"><img src="docs/img/xschem_analog_neuron.png" alt="Full transistor-level xschem schematic of the neuron: bias reference with start-up, 9:4:3 divider, signal and knee V-to-I converters with their OTAs, x2 weight mirrors, knee flip, ReLU diode, output copy and R_out" width="100%"></a>
 
-<sub>`neuron_core` in xschem, using the SKY130 device symbols. The schematics live in [`xschem/`](xschem). xschem
-netlists each one and netgen compares the result with the SPICE netlists, which remain the design source. All
-four cells match uniquely, with no property errors ([logs](verif/lvs/schematic)).</sub>
-
-<details>
-<summary><b>Sub-cells</b>: V→I converter, OTA, bias reference</summary>
-
-<br>
-
-**V→I converter** (`vi_conv`): the OTA holds node X at V<sub>REF</sub> through M<sub>F</sub>, I<sub>0</sub> keeps
-M<sub>F</sub> biased, and C<sub>c</sub> with R<sub>z</sub> compensates the loop.
-
-<img src="docs/img/xschem_vi_conv.png" alt="xschem schematic of the V-to-I converter" width="100%">
-
-**OTA** (`ota5p`): five-transistor OTA with a PMOS input pair in its own well, tied to the tail node T.
-
-<img src="docs/img/xschem_ota5p.png" alt="xschem schematic of the 5-transistor OTA" width="100%">
-
-**Bias reference** (`bias_ref`): β-multiplier with K = 4 and R<sub>1</sub>, plus its start-up branch.
-
-<img src="docs/img/xschem_bias_ref.png" alt="xschem schematic of the beta-multiplier bias reference with start-up" width="100%">
-
-</details>
+<sub>The whole neuron on one xschem sheet, [`xschem/analog_neuron.sch`](xschem/analog_neuron.sch). It shows all 39 devices
+with their SKY130 sizes. The top row holds the bias reference, divider and signal converter; the bottom row holds the
+knee converter, weight mirrors, knee flip, ReLU and output. Labels such as GS, GK, VP and VREF join the two rows.
+netgen matches the sheet with the full SPICE design, 39 devices and 23 nets, with no property errors
+([log](verif/lvs/schematic/analog_neuron_comp.out)). Click the image to zoom.</sub>
 
 ## Silicon
 
@@ -195,7 +177,7 @@ interface is defined in [`analog_neuron.v`](submit/analog_neuron.v).
 | DRC, every cell and the GDS read back | Magic `drc(full)` | ✅ 0 |
 | DRC, manufacturing rules (FEOL, BEOL, off-grid) | KLayout `sky130A_mr.drc` | ✅ 0 |
 | LVS, every cell and the GDS | netgen `sky130A_setup.tcl` | ✅ unique match, 0 property errors |
-| Schematic ↔ SPICE netlist, every cell | xschem netlist + netgen | ✅ unique match, 0 property errors |
+| Schematic ↔ SPICE netlist, full sheet and every cell | xschem netlist + netgen | ✅ unique match, 0 property errors |
 | Antenna | Magic `antennacheck` | ✅ 0 |
 | Pin labels, zero-area shapes | KLayout PDK decks | ✅ 0 · 0 |
 | GDS ↔ .mag | layer-by-layer XOR | ✅ identical |
@@ -216,7 +198,7 @@ python3 scripts/sim.py spice/neuron/neuron_tb.cir --mc 200 --corner tt_mm --jobs
 python3 scripts/sim.py spice/neuron/neuron_pex_tb.cir --pvt --jobs 12
 python3 scripts/sim.py spice/neuron/neuron_pex_mb_tb.cir --pvt --jobs 12
 
-# schematics: write xschem/*.sch, LVS them against the netlists, screenshot them
+# schematics: write xschem/*.sch, LVS them against the netlists, screenshot the full sheet
 python3 scripts/schematics.py --check --export
 
 # generate the layout and the GDS

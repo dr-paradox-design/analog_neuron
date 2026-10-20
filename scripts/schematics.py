@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """xschem schematics of the design, generated from the same sizing as the SPICE netlists.
 
-Writes xschem/{ota5p,bias_ref,vi_conv,neuron_core}.sch and their .sym symbols. The SPICE netlists in
+Writes xschem/{ota5p,bias_ref,vi_conv,neuron_core}.sch and their .sym symbols, plus analog_neuron.sch: the
+whole neuron flat on one sheet, every device drawn. The SPICE netlists in
 spice/ stay the design source; these schematics are the readable view of them, and --check proves they
 are the same circuit (xschem netlist vs spice/lvs/<cell>_ref.spice, netgen).
 
   python3 scripts/schematics.py             write the .sch / .sym files
   python3 scripts/schematics.py --check     ... then netlist each with xschem and LVS it (verif/lvs/schematic/)
-  python3 scripts/schematics.py --export    ... then screenshot each with xschem into docs/img/xschem_<cell>.png
+  python3 scripts/schematics.py --export    ... then screenshot the full sheet with xschem (docs/img/xschem_analog_neuron.png)
 """
 import os
 import pathlib
@@ -16,7 +17,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 XS = ROOT / "xschem"
-CELLS = ("ota5p", "bias_ref", "vi_conv", "neuron_core")
+CELLS = ("ota5p", "bias_ref", "vi_conv", "neuron_core", "analog_neuron")
 HEADER = "v {xschem version=3.4.8 file_version=1.2}\n"
 
 # pin positions of the symbols used (symbol coordinates, y down)
@@ -327,6 +328,161 @@ def neuron_core():
     s.write(XS / "neuron_core.sch")
 
 
+# ------------------------------------------------------------------- flat transistor-level top cell
+def flat_converter(s, ox, oy, tag, inp, g, title, tap):
+    """One V->I converter at transistor level (R_in, 5-T OTA, MF, I0, Cc, Rz); rails at oy and oy + 350."""
+    P = lambda x, y: (ox + x, oy + y)
+    n = lambda base: f"{base}_{tag}"
+    t = "T" + tag
+    r = s.res(n("XR"), *P(-20, 170), 103.53, rot=3)
+    i0 = s.fet("pfet", n("XI0"), *P(80, 60), 16, 4, "VDD")
+    mf = s.fet("nfet", n("XMF"), *P(80, 290), 16, 4, "VSS")
+    cc = s.cap(n("XCC"), *P(240, 200), 20, 20, rot=2, flip=1)
+    rz = s.res(n("XRZ"), *P(240, 270), 25, rot=2, flip=1)
+    mt = s.fet("pfet", n("XMT"), *P(500, 60), 16, 2, "VDD")
+    m1 = s.fet("pfet", n("XM1"), *P(420, 170), 10, 1, t)
+    m2 = s.fet("pfet", n("XM2"), *P(620, 170), 10, 1, t, flip=1)
+    m3 = s.fet("nfet", n("XM3"), *P(460, 290), 2, 2, "VSS", flip=1)
+    m4 = s.fet("nfet", n("XM4"), *P(580, 290), 2, 2, "VSS")
+    for d in (i0["S"], mt["S"]):
+        tap(d, oy)
+    for d in (mf["S"], m3["S"], m4["S"]):
+        tap(d, oy + 350)
+    s.wire(P(-90, 170), r["P"])
+    s.wire(r["M"], P(100, 170), P(240, 170), m1["G"])
+    s.wire(i0["D"], P(100, 170), mf["D"])
+    s.wire(cc["c0"], rz["M"])
+    s.wire(rz["P"], P(240, 320))
+    s.wire(m1["S"], P(440, 110), P(520, 110))
+    s.wire(m2["S"], P(600, 110), P(520, 110))
+    s.wire(mt["D"], P(520, 110))
+    s.wire(m1["D"], P(440, 230), m3["D"])
+    s.wire(P(440, 230), P(500, 230), P(500, 290))
+    s.wire(m3["G"], P(500, 290), m4["G"])
+    s.wire(m2["D"], P(600, 230), m4["D"])
+    s.wire(P(600, 230), P(680, 230))
+    s.wire(m2["G"], P(680, 170))
+    if inp == "X":
+        s.label(*P(-90, 170), "X", "ipin")
+    else:
+        s.label(*P(-90, 170), inp)
+    s.label(*r["B"], "VSS")
+    s.label(*rz["B"], "VSS")
+    s.label(*i0["G"], "VP")
+    s.label(*mt["G"], "VP")
+    s.label(*mf["G"], g)
+    s.label(*P(240, 320), g)
+    s.label(*P(680, 230), g, flip=1)
+    s.label(*P(680, 170), "VREF", flip=1)
+    s.label(*P(520, 110), t, "lab_wire")
+    s.label(*P(100, 170), "X" + tag, "lab_wire")
+    s.text(title, *P(-60, -60), 0.3, layer=8)
+    s.text("OTA", *P(500, -60), 0.3, layer=8)
+
+
+def analog_neuron():
+    """The whole neuron on one sheet: every transistor, resistor and capacitor of the design."""
+    s = Sch()
+    taps = {}
+
+    def tap(p, y):
+        s.wire(p, (p[0], y))
+        taps.setdefault(y, set()).add(p[0])
+
+    # ---- row 1: bias reference, divider, signal converter (VDD at y=0, VSS at y=350)
+    P = lambda x, y: (x + 140, y - 140)
+    ms3 = s.fet("nfet", "XMS3", *P(-20, 200), 1, 1, "VSS")
+    m3 = s.fet("pfet", "XMB3", *P(200, 200), 16, 2, "VDD", flip=1)
+    m4 = s.fet("pfet", "XMB4", *P(340, 200), 16, 2, "VDD")
+    m1 = s.fet("nfet", "XMB1", *P(200, 330), 20, 2, "VSS", flip=1)
+    m2 = s.fet("nfet", "XMB2", *P(340, 330), 20, 2, "VSS", m=4)
+    r1 = s.res("XR1", *P(360, 410), 17, wide=True)
+    ms1a = s.fet("pfet", "XMS1A", *P(500, 200), 0.42, 40, "VDD")
+    ms1b = s.fet("pfet", "XMS1B", *P(500, 290), 0.42, 40, "VDD")
+    ms2 = s.fet("nfet", "XMS2", *P(500, 380), 16, 0.5, "VSS")
+    for d in (ms3["D"], m3["S"], m4["S"], ms1a["S"]):
+        tap(d, 0)
+    for d in (m1["S"], r1["M"], ms2["S"]):
+        tap(d, 350)
+    s.wire(m3["G"], P(290, 200), m4["G"])
+    s.wire(m4["D"], P(360, 260), m2["D"])
+    s.wire(P(360, 260), P(290, 260), P(290, 200))
+    s.wire(P(360, 260), P(420, 260))
+    s.wire(m3["D"], P(180, 265), m1["D"])
+    s.wire(P(180, 265), P(240, 265), P(240, 330))
+    s.wire(m1["G"], P(240, 330), m2["G"])
+    s.wire(m2["S"], r1["P"])
+    s.wire(ms3["S"], P(0, 265), P(180, 265))
+    s.wire(P(0, 265), P(-80, 265))
+    s.wire(ms1a["D"], ms1b["S"])
+    s.wire(ms1b["D"], P(520, 335), ms2["D"])
+    s.wire(P(520, 335), P(570, 335))
+    for pin, net, f in ((r1["B"], "VSS", 0), (ms1a["G"], "VSS", 0), (ms1b["G"], "VSS", 0), (ms2["G"], "VN", 0),
+                        (ms3["G"], "ST", 0), (P(570, 335), "ST", 1), (P(420, 260), "VP", 1), (P(-80, 265), "VN", 0)):
+        s.label(*pin, net, flip=f)
+    # ratiometric divider
+    dx = 840
+    ra = s.res("XRA", dx, 60, 133.11)
+    rb = s.res("XRB", dx, 170, 59.16)
+    rc = s.res("XRC", dx, 280, 44.37)
+    tap(ra["P"], 0)
+    tap(rc["M"], 350)
+    s.wire(ra["M"], (dx, 115), rb["P"])
+    s.wire(rb["M"], (dx, 225), rc["P"])
+    s.wire((dx, 115), (dx + 50, 115))
+    s.wire((dx, 225), (dx + 50, 225))
+    s.label(dx + 50, 115, "VK", flip=1)
+    s.label(dx + 50, 225, "VREF", flip=1)
+    for r in (ra, rb, rc):
+        s.label(*r["B"], "VSS")
+    flat_converter(s, 1080, 0, "S", "X", "GS", "signal V->I converter", tap)
+
+    # ---- row 2: knee converter and the current-mode core (VDD at y=520, VSS at y=870)
+    flat_converter(s, 140, 520, "K", "VK", "GK", "knee V->I converter", tap)
+    C = lambda x, y: (x + 900, y + 520)
+    pk1 = s.fet("pfet", "XPK1", *C(80, 60), 32, 4, "VDD", flip=1)
+    pk2 = s.fet("pfet", "XPK2", *C(220, 60), 32, 4, "VDD")
+    wk = s.fet("nfet", "XWK", *C(40, 290), 16, 4, "VSS", m=2)
+    ws = s.fet("nfet", "XWS", *C(220, 290), 16, 4, "VSS", m=2)
+    pr1 = s.fet("pfet", "XPR1", *C(460, 60), 32, 8, "VDD", flip=1)
+    pr2 = s.fet("pfet", "XPR2", *C(580, 60), 32, 8, "VDD")
+    ro = s.res("XRO", *C(600, 240), 103.53)
+    for d in (pk1["S"], pk2["S"], pr1["S"], pr2["S"]):
+        tap(d, 520)
+    for d in (wk["S"], ws["S"], ro["M"]):
+        tap(d, 870)
+    s.wire(pk1["G"], C(150, 60), pk2["G"])
+    s.wire(C(150, 60), C(150, 120), C(60, 120))
+    s.wire(pk1["D"], C(60, 120), wk["D"])
+    s.wire(pk2["D"], C(240, 180), ws["D"])
+    s.wire(C(240, 180), C(340, 180), C(440, 180))
+    s.wire(pr1["G"], C(520, 60), pr2["G"])
+    s.wire(C(520, 60), C(520, 120), C(440, 120))
+    s.wire(pr1["D"], C(440, 120), C(440, 180))
+    s.wire(pr2["D"], C(600, 180), ro["P"])
+    s.wire(C(600, 180), C(660, 180))
+    s.label(*C(660, 180), "Y", "opin")
+    s.label(*ro["B"], "VSS")
+    s.label(*wk["G"], "GK")
+    s.label(*ws["G"], "GS")
+    s.label(*C(340, 180), "S", "lab_wire")
+    s.label(*C(60, 120), "DK", "lab_wire")
+
+    # ---- rails and supply pins
+    for y, net, port in ((0, "VDD", True), (350, "VSS", True), (520, "VDD", False), (870, "VSS", False)):
+        xs = sorted(taps[y] | {20})
+        s.wire(*[(x, y) for x in xs])
+        if port:
+            s.label(20, y, net, "iopin", flip=1)
+        else:
+            s.label(20, y, net)
+    for t, x, y in (("bias reference (beta multiplier)", 120, -60), ("start-up", 600, -60),
+                    ("divider 9:4:3", 790, -60), ("knee flip", 970, 460), ("ReLU + output copy", 1320, 460),
+                    ("x2 weight mirrors", 940, 890), ("R_out", 1520, 800)):
+        s.text(t, x, y, 0.3, layer=8)
+    s.write(XS / "analog_neuron.sch")
+
+
 def write_all():
     XS.mkdir(exist_ok=True)
     (XS / "xschemrc").write_text(
@@ -338,6 +494,7 @@ def write_all():
     bias_ref()
     vi_conv()
     neuron_core()
+    analog_neuron()
     print("wrote", ", ".join(f"xschem/{c}.sch" for c in CELLS))
 
 
@@ -386,19 +543,19 @@ def check():
     return ok
 
 
-# image size per cell (pixels); xschem zooms the whole schematic to fit, the margins are cropped afterwards
-SHOT = {"ota5p": (1500, 1300), "bias_ref": (2200, 1250), "vi_conv": (1600, 1300), "neuron_core": (2400, 1250)}
+# screenshot size (pixels); xschem zooms the whole sheet to fit, the margins are cropped afterwards
+SHOT = {"analog_neuron": (3000, 1900)}
 
 
 def export():
-    """Screenshots from xschem itself (its own renderer and colours). xschem needs a window for PNG output,
-    so this briefly opens one per cell. The simulation back-annotation layers (15, 17: id, gm, vgs, vds)
+    """Screenshot from xschem itself (its own renderer and colours). xschem needs a window for PNG output,
+    so this briefly opens one. The simulation back-annotation layers (15, 17: id, gm, vgs, vds)
     are hidden because they only show '-' without a simulation."""
     from PIL import Image, ImageOps
     out = ROOT / "build" / "xschem"
     out.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, PDK_ROOT=os.environ.get("PDK_ROOT", str(pathlib.Path.home() / ".ciel")), PDK="sky130A")
-    for cell in CELLS:
+    for cell in SHOT:
         raw = out / f"{cell}_raw.png"
         raw.unlink(missing_ok=True)
         w, h = SHOT[cell]
