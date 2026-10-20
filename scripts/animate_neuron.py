@@ -22,6 +22,8 @@ VREF, VK, RIN = 0.2556, 0.5966, 304e3
 IK = (VK - VREF) / RIN
 UNIT = 0.5e-6                          # current per strand
 PITCH = 0.62
+DASH = (1.2, 2.6)                      # short dashes, long gaps: reads as moving charge
+PERIOD = sum(DASH)
 
 d = np.loadtxt(ROOT / "build/plots/curve_27.txt")
 keep = (d[:, 0] > 55e-6) & (d[:, 1] >= 0.29) & (d[:, 1] <= 1.21)
@@ -30,6 +32,7 @@ order = np.argsort(cx)
 cx, cy = cx[order], cy[order]
 
 N = 84
+STEP = 17 * PERIOD / N
 xs = np.concatenate([np.linspace(0.3, 1.2, N // 2), np.linspace(1.2, 0.3, N // 2)])
 
 fig = plt.figure(figsize=(10, 4.3), dpi=100)
@@ -43,7 +46,7 @@ def bez(p0, p1, p2, p3, n=60):
     return (1 - t) ** 3 * p0 + 3 * (1 - t) ** 2 * t * p1 + 3 * (1 - t) * t ** 2 * p2 + t ** 3 * p3
 
 
-def bundle(ax, pts, n, color, phase, taper=(1, 1), reverse=False):
+def bundle(ax, pts, n, color, phase, taper=(1, 1)):
     if n <= 0:
         return
     p = np.asarray(pts, float)
@@ -52,11 +55,11 @@ def bundle(ax, pts, n, color, phase, taper=(1, 1), reverse=False):
     nrm = np.stack([-g[:, 1], g[:, 0]], axis=1)
     s = np.linspace(*taper, len(p))[:, None]
     # a growing dash offset moves the dashes toward the start of the path, so flow forward = shrinking offset
-    off = phase if reverse else (3.8 - phase) % 3.8
+    off = (PERIOD - phase) % PERIOD
     for k in range(n):
         q = p + nrm * (k - (n - 1) / 2) * PITCH * s
         ax.plot(q[:, 0], q[:, 1], color=color, lw=1.1, alpha=0.95,
-                ls=(off, (2.2, 1.6)), solid_capstyle="butt", zorder=3)
+                ls=(off, DASH), solid_capstyle="butt", zorder=3)
 
 
 def box(ax, x1, x2, y, label, h=7):
@@ -72,7 +75,9 @@ def draw(i):
     y = float(np.interp(x, cx, cy))
     ns, nk = int(round(2 * ix / UNIT)), int(round(2 * IK / UNIT))
     no = max(0, ns - nk)
-    phase = (i * 1.3) % 3.8
+    # 0.2 of a dash period per frame: small enough that the eye cannot read the motion backwards, and a whole
+    # number of periods per loop so the GIF wraps seamlessly
+    phase = (i * STEP) % PERIOD
 
     ax = axl
     ax.clear()
