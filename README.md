@@ -4,6 +4,8 @@
 
 **An analog ReLU neuron in SkyWater SKY130, taken from schematic to GDS with an open-source flow.**
 
+<sub>by <b>Swastik Aditya Ranjan</b> · independent designer · Rourkela, India</sub>
+
 ![process](https://img.shields.io/badge/process-SKY130A-1f6feb?style=flat-square&labelColor=30363d)
 ![flow](https://img.shields.io/badge/flow-Magic_%C2%B7_netgen_%C2%B7_ngspice_%C2%B7_KLayout-1f6feb?style=flat-square&labelColor=30363d)
 ![sign-off](https://img.shields.io/badge/DRC_%C2%B7_LVS_%C2%B7_antenna-clean-238636?style=flat-square&labelColor=30363d)
@@ -221,6 +223,8 @@ python3 scripts/make_submission.py
 ---
 
 <div align="center"><sub>
+Designed and laid out by <b>Swastik Aditya Ranjan</b> for Silicluster v3
+<br><br>
 <a href="docs/ADR-001-neuron-architecture.md">architecture</a> ·
 <a href="docs/neuron-core.md">neuron core</a> ·
 <a href="docs/bias-reference.md">bias reference</a> ·
