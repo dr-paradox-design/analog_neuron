@@ -9,7 +9,7 @@
 ![process](https://img.shields.io/badge/process-SKY130A-1f6feb?style=flat-square&labelColor=30363d)
 ![flow](https://img.shields.io/badge/flow-Magic_%C2%B7_netgen_%C2%B7_ngspice_%C2%B7_KLayout-1f6feb?style=flat-square&labelColor=30363d)
 ![sign-off](https://img.shields.io/badge/DRC_%C2%B7_LVS_%C2%B7_antenna-clean-238636?style=flat-square&labelColor=30363d)
-![Silicluster](https://img.shields.io/badge/Silicluster_v3-ready_%C2%B7_due_31_Oct_2026-9e6a03?style=flat-square&labelColor=30363d)
+![Silicluster](https://img.shields.io/badge/Silicluster_v3-submitted_29_Oct_2026-8957e5?style=flat-square&labelColor=30363d)
 
 <img src="docs/img/neuron.gif" alt="Animation: as the input x sweeps, the signal current grows, the knee current stays fixed, and output current flows only once the signal exceeds the knee" width="100%">
 
